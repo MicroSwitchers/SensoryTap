@@ -2,12 +2,13 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="A sensory cause and effect app for early childhood vision development">
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Sensory Spark">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>Sensory Spark</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
@@ -29,6 +30,25 @@
             user-select: none;
             -webkit-user-select: none;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            /* Support for iOS safe areas and notches */
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
+
+        /* Fullscreen mode enhancements */
+        html:fullscreen,
+        html:-webkit-full-screen,
+        html:-moz-full-screen,
+        html:-ms-fullscreen {
+            width: 100%;
+            height: 100%;
+        }
+
+        body:fullscreen,
+        body:-webkit-full-screen,
+        body:-moz-full-screen,
+        body:-ms-fullscreen {
+            width: 100%;
+            height: 100%;
         }
 
         #canvas {
@@ -315,6 +335,59 @@
             color: white;
         }
 
+        /* Slider Style */
+        .slider-container {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .slider-value {
+            color: white;
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.2);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
         #close-drawer {
             margin-top: 10px;
             width: 100%;
@@ -424,6 +497,10 @@
         <div class="setting-section">
             <span class="setting-label">Interface Settings</span>
             
+            <div id="fullscreen-options" style="margin-bottom: 15px;">
+                <!-- Fullscreen toggle added via JS -->
+            </div>
+            
             <div style="margin-bottom: 15px;">
                 <span class="setting-label">Button Color</span>
                 <div class="color-grid" id="switch-color-options">
@@ -453,6 +530,17 @@
                 <span class="setting-label">Button Position</span>
                 <div class="pos-grid" id="position-options">
                     <!-- Position buttons added via JS -->
+                </div>
+            </div>
+
+            <div style="margin-top: 15px;">
+                <span class="setting-label">Button Size</span>
+                <div class="slider-container">
+                    <div class="slider-header">
+                        <span>Scale</span>
+                        <span class="slider-value" id="button-scale-value">100%</span>
+                    </div>
+                    <input type="range" id="button-scale-slider" min="50" max="250" step="10" value="50">
                 </div>
             </div>
         </div>
@@ -488,6 +576,8 @@
         
         // Animation customization
         let animationShape = 'waves'; // 'waves', 'bubbles'
+        let buttonScale = 0.5; // Button size scale (0.5 = default, up to 2.5)
+        let isFullscreen = false; // Track fullscreen state
 
         // Load saved preferences
         function loadPreferences() {
@@ -503,6 +593,7 @@
                     if (prefs.activeHueRange) activeHueRange = prefs.activeHueRange;
                     if (prefs.currentHue !== undefined) currentHue = prefs.currentHue;
                     if (prefs.animationShape) animationShape = prefs.animationShape;
+                    if (prefs.buttonScale !== undefined) buttonScale = prefs.buttonScale;
                 } catch (e) {
                     console.error('Failed to load preferences:', e);
                 }
@@ -519,7 +610,8 @@
                 activeSwitchColorIndex,
                 activeHueRange,
                 currentHue,
-                animationShape
+                animationShape,
+                buttonScale
             };
             localStorage.setItem('sensorySparkPrefs', JSON.stringify(prefs));
         }
@@ -569,6 +661,16 @@
                 savePreferences();
             };
             visibilityContainer.appendChild(toggleBtn);
+
+            // Setup Fullscreen Toggle
+            const fullscreenContainer = document.getElementById('fullscreen-options');
+            const fullscreenBtn = document.createElement('div');
+            fullscreenBtn.className = `toggle-btn ${isFullscreen ? 'active' : ''}`;
+            fullscreenBtn.innerHTML = `<span>Fullscreen Mode</span><span class="toggle-status">${isFullscreen ? 'ON' : 'OFF'}</span>`;
+            fullscreenBtn.onclick = () => {
+                toggleFullscreen();
+            };
+            fullscreenContainer.appendChild(fullscreenBtn);
 
             // Setup Interaction Mode Options
             const interactionContainer = document.getElementById('interaction-options');
@@ -638,6 +740,9 @@
                     
                     // Add new class
                     cueArea.classList.add(currentPosition);
+
+                    // Update button size for new position
+                    updateButtonSize();
 
                     // Update UI buttons
                     document.querySelectorAll('#position-options .pos-btn').forEach(el => {
@@ -721,6 +826,58 @@
                 };
                 shapeContainer.appendChild(btn);
             });
+
+            // Setup Button Size Slider
+            const sizeSlider = document.getElementById('button-scale-slider');
+            const sizeValue = document.getElementById('button-scale-value');
+            
+            // Set initial value
+            sizeSlider.value = buttonScale * 100;
+            sizeValue.textContent = `${Math.round(buttonScale * 100)}%`;
+            
+            // Handle slider changes
+            sizeSlider.addEventListener('input', (e) => {
+                buttonScale = e.target.value / 100;
+                sizeValue.textContent = `${Math.round(buttonScale * 100)}%`;
+                updateButtonSize();
+                savePreferences();
+            });
+            
+            // Apply initial button size
+            updateButtonSize();
+        }
+
+        function updateButtonSize() {
+            // Apply scale to button dimensions based on position
+            const baseWidth = 360;
+            const baseHeight = 130;
+            const baseCenterSize = 240;
+            
+            const scaledWidth = baseWidth * buttonScale;
+            const scaledHeight = baseHeight * buttonScale;
+            const scaledCenterSize = baseCenterSize * buttonScale;
+            
+            // Update CSS custom properties for dynamic sizing
+            cueArea.style.setProperty('--button-scale', buttonScale);
+            
+            // Apply sizes based on current position
+            if (currentPosition === 'pos-bottom' || currentPosition === 'pos-top') {
+                cueArea.style.width = `${scaledWidth}px`;
+                cueArea.style.height = `${scaledHeight}px`;
+                cueArea.style.borderRadius = currentPosition === 'pos-bottom' ? 
+                    `${scaledWidth/2}px ${scaledWidth/2}px 0 0` : 
+                    `0 0 ${scaledWidth/2}px ${scaledWidth/2}px`;
+            } else if (currentPosition === 'pos-left' || currentPosition === 'pos-right') {
+                cueArea.style.width = `${scaledHeight}px`;
+                cueArea.style.height = `${scaledWidth}px`;
+                cueArea.style.borderRadius = currentPosition === 'pos-right' ? 
+                    `${scaledWidth/2}px 0 0 ${scaledWidth/2}px` : 
+                    `0 ${scaledWidth/2}px ${scaledWidth/2}px 0`;
+            } else if (currentPosition === 'pos-center') {
+                cueArea.style.width = `${scaledCenterSize}px`;
+                cueArea.style.height = `${scaledCenterSize}px`;
+                cueArea.style.borderRadius = '50%';
+            }
         }
 
         function updateSwitchColor() {
@@ -729,6 +886,59 @@
             document.documentElement.style.setProperty('--switch-color-dark', color.dark);
             document.documentElement.style.setProperty('--switch-shadow', color.shadow);
         }
+
+        // --- Fullscreen Logic ---
+        function toggleFullscreen() {
+            if (!document.fullscreenElement && 
+                !document.webkitFullscreenElement && 
+                !document.mozFullScreenElement && 
+                !document.msFullscreenElement) {
+                // Enter fullscreen
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { // Safari
+                    elem.webkitRequestFullscreen();
+                } else if (elem.mozRequestFullScreen) { // Firefox
+                    elem.mozRequestFullScreen();
+                } else if (elem.msRequestFullscreen) { // IE/Edge
+                    elem.msRequestFullscreen();
+                }
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        function updateFullscreenButton() {
+            isFullscreen = !!(document.fullscreenElement || 
+                            document.webkitFullscreenElement || 
+                            document.mozFullScreenElement || 
+                            document.msFullscreenElement);
+            
+            const fullscreenBtn = document.querySelector('#fullscreen-options .toggle-btn');
+            if (fullscreenBtn) {
+                fullscreenBtn.classList.toggle('active', isFullscreen);
+                const statusSpan = fullscreenBtn.querySelector('.toggle-status');
+                if (statusSpan) {
+                    statusSpan.textContent = isFullscreen ? 'ON' : 'OFF';
+                }
+            }
+        }
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', updateFullscreenButton);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+        document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+        document.addEventListener('MSFullscreenChange', updateFullscreenButton);
 
         // --- Hold-to-Open Settings Logic ---
         let holdTimer;
@@ -846,7 +1056,7 @@
                 gradient.addColorStop(1, `hsla(${this.hue}, 80%, 45%, ${this.opacity * 0.4})`);
                 
                 // Add soft glow
-                ctx.shadowBlur = 20; // Reduced blur
+                ctx.shadowBlur = 12;
                 ctx.shadowColor = `hsla(${this.hue}, 90%, 60%, ${this.opacity * 0.5})`;
                 
                 ctx.beginPath();
@@ -882,7 +1092,7 @@
                 this.hue = hue;
                 this.delay = delay;
                 this.radius = 0;
-                this.maxRadius = Math.max(width, height) * 1.2;
+                this.maxRadius = Math.max(width, height) * 1.8;
                 this.opacity = 0.4;
                 this.growth = 1.8; // Slower growth for calmer waves
                 this.thickness = 35 + Math.random() * 25; // Thinner, more consistent
