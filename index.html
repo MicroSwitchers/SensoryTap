@@ -1264,10 +1264,12 @@
                     elements.push(new Bubble(spreadX, y, hueVariation, i * 200));
                 }
             } else {
-                // Regular waves from center
-                const waveCount = 2; // Reduced from 4
+                // Waves spawn from top of screen for better visual line of sight
+                const waveCount = 2;
                 for (let i = 0; i < waveCount; i++) {
-                    elements.push(new FluidWave(x, y, hue, i * 800, shapeToUse));
+                    const topY = 100 + Math.random() * 150; // Near top of screen
+                    const spreadX = x + (Math.random() - 0.5) * width * 0.3;
+                    elements.push(new FluidWave(spreadX, topY, hue, i * 800, shapeToUse));
                 }
             }
             
@@ -1402,12 +1404,19 @@
             for(let i = 0; i < spawnCount; i++) {
                 setTimeout(() => {
                     let spawnX = centerX + (Math.random() - 0.5) * 200;
-                    let spawnY = centerY + (Math.random() - 0.5) * 150;
+                    let spawnY;
+                    
+                    // Waves spawn from top of screen, bubbles from bottom
+                    if (animationShape === 'bubbles') {
+                        spawnY = centerY + (Math.random() - 0.5) * 150;
+                    } else {
+                        // Waves spawn from top for better visual line of sight
+                        spawnY = 100 + Math.random() * 150;
+                    }
                     
                     // Keep within screen bounds
                     const padding = 100;
                     spawnX = Math.max(padding, Math.min(width - padding, spawnX));
-                    spawnY = Math.max(padding, Math.min(height - padding, spawnY));
                     
                     spawnSensoryEffect(spawnX, spawnY, animationShape);
                 }, i * 1200);
