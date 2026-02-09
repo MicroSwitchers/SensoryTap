@@ -1,6 +1,6 @@
 {
-  "name": "Sensory Spark",
-  "short_name": "Sensory Spark",
+  "name": "Sensory Tap",
+  "short_name": "Sensory Tap",
   "description": "A sensory cause and effect app for early childhood vision development",
   "start_url": "./index.html",
   "display": "fullscreen",

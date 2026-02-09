@@ -7,9 +7,9 @@
     <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Sensory Spark">
+    <meta name="apple-mobile-web-app-title" content="Sensory Tap">
     <meta name="mobile-web-app-capable" content="yes">
-    <title>Sensory Spark</title>
+    <title>Sensory Tap</title>
     <link rel="manifest" href="manifest.json">
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -581,7 +581,7 @@
 
         // Load saved preferences
         function loadPreferences() {
-            const saved = localStorage.getItem('sensorySparkPrefs');
+            const saved = localStorage.getItem('sensoryTapPrefs');
             if (saved) {
                 try {
                     const prefs = JSON.parse(saved);
@@ -613,7 +613,7 @@
                 animationShape,
                 buttonScale
             };
-            localStorage.setItem('sensorySparkPrefs', JSON.stringify(prefs));
+            localStorage.setItem('sensoryTapPrefs', JSON.stringify(prefs));
         }
 
         const hueRanges = [

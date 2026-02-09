@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sensory-spark-v1';
+const CACHE_NAME = 'sensory-tap-v1';
 const urlsToCache = [
   './',
   './index.html',
