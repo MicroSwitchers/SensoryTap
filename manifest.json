@@ -1,44 +1,24 @@
 {
-  "name": "StoryTap: Touch Books",
-  "short_name": "StoryTap",
-  "description": "Interactive touch stories for children with accessibility features.",
+  "name": "Sensory Tap",
+  "short_name": "Sensory Tap",
+  "description": "A sensory cause and effect app for early childhood vision development",
   "start_url": "./index.html",
-  "id": "storytap-touch-books",
   "display": "fullscreen",
-  "display_override": [
-    "fullscreen",
-    "standalone",
-    "minimal-ui"
-  ],
-  "background_color": "#1e1b4b",
-  "theme_color": "#6366f1",
   "orientation": "any",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "scope": "./",
-  "categories": [
-    "education",
-    "kids",
-    "books"
-  ],
-  "prefer_related_applications": false,
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  },
   "icons": [
     {
-      "src": "icon.svg",
-      "sizes": "any",
-      "type": "image/svg+xml"
-    },
-    {
-      "src": "icon.svg",
+      "src": "icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "icon.svg",
+      "src": "icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ]

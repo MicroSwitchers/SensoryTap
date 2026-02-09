@@ -1,2787 +1,1485 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport"
-    content="width=device-width, initial-scale=1.0, minimum-scale=1.0, shrink-to-fit=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#6366f1" />
-  <!-- iOS PWA fullscreen support -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="StoryTap" />
-  <!-- Android PWA fullscreen support -->
-  <meta name="mobile-web-app-capable" content="yes" />
-  <!-- Prevent auto-formatting of phone numbers/addresses -->
-  <meta name="format-detection" content="telephone=no, address=no, email=no" />
-  <!-- SEO -->
-  <meta name="description" content="Interactive touch stories for children with accessibility features." />
-  <title>StoryTap — Touch Books for Little Ones</title>
-  <!-- PWA -->
-  <link rel="manifest" href="manifest.json" />
-  <link rel="icon" type="image/svg+xml" href="icon.svg" />
-  <link rel="apple-touch-icon" href="icon.svg" />
-  <!-- Preconnect for faster font loading -->
-  <link rel="dns-prefetch" href="https://fonts.googleapis.com">
-  <link rel="dns-prefetch" href="https://fonts.gstatic.com">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link
-    href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Crimson+Pro:wght@400;500;600&display=swap"
-    rel="stylesheet">
-  <script src="https://cdn.tailwindcss.com/3.4.16"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['Nunito', 'system-ui', 'sans-serif'],
-            serif: ['Crimson Pro', 'Georgia', 'serif'],
-          },
-        },
-      },
-    };
-  </script>
-  <style>
-    /* ================================================
-       PERFORMANCE & ACCESSIBILITY OPTIMIZATIONS
-       ================================================ */
-    * {
-      -webkit-tap-highlight-color: transparent;
-      /* Hint to browser for smoother animations */
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="A sensory cause and effect app for early childhood vision development">
+    <meta name="theme-color" content="#000000">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Sensory Tap">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Sensory Tap</title>
+    <link rel="manifest" href="manifest.json">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --switch-color-main: #ff0000;
+            --switch-color-dark: #770000;
+            --switch-shadow: rgba(255, 0, 0, 0.3);
+        }
 
-    /* Reduce animations for users who prefer reduced motion */
-    @media (prefers-reduced-motion: reduce) {
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #000000;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            /* Support for iOS safe areas and notches */
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        }
 
-      *,
-      *::before,
-      *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
+        /* Fullscreen mode enhancements */
+        html:fullscreen,
+        html:-webkit-full-screen,
+        html:-moz-full-screen,
+        html:-ms-fullscreen {
+            width: 100%;
+            height: 100%;
+        }
 
-    /* ================================================
-       FULLSCREEN PWA BODY STYLES
-       ================================================ */
-    html,
-    body {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      width: 100%;
-      /* Prevent text size inflation on mobile browsers (especially Firefox) */
-      -webkit-text-size-adjust: 100%;
-      -moz-text-size-adjust: 100%;
-      text-size-adjust: 100%;
-    }
+        body:fullscreen,
+        body:-webkit-full-screen,
+        body:-moz-full-screen,
+        body:-ms-fullscreen {
+            width: 100%;
+            height: 100%;
+        }
 
-    body {
-      font-family: 'Nunito', sans-serif;
-      /* Safe area insets for notched devices */
-      padding-top: env(safe-area-inset-top, 0px);
-      padding-bottom: env(safe-area-inset-bottom, 0px);
-      padding-left: env(safe-area-inset-left, 0px);
-      padding-right: env(safe-area-inset-right, 0px);
-      -webkit-user-select: none;
-      user-select: none;
-      -webkit-overflow-scrolling: touch;
-    }
+        #canvas {
+            display: block;
+        }
 
-    /* Root container */
-    #root {
-      width: 100%;
-      min-height: 100dvh;
-    }
+        /* --- The Big Target Button Styles --- */
+        #cue-area {
+            position: absolute;
+            background: radial-gradient(circle at center, var(--switch-color-main) 0%, var(--switch-color-dark) 100%);
+            border: 5px solid #1a1a1a;
+            box-shadow: 0 0 30px var(--switch-shadow);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 10;
+            opacity: 1;
+            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 3s ease-in-out;
+        }
 
-    input,
-    textarea {
-      -webkit-user-select: text;
-      user-select: text;
-      /* Prevent iOS zoom on input focus */
-      font-size: 16px !important;
-    }
+        /* 1. Bottom (Default) */
+        #cue-area.pos-bottom {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 360px;
+            max-width: 90vw;
+            height: 130px;
+            border-radius: 180px 180px 0 0;
+            border-bottom: none;
+            background: radial-gradient(circle at center 100%, var(--switch-color-main) 0%, var(--switch-color-dark) 100%);
+        }
+        #cue-area.pos-bottom:active { height: 100px; }
 
-    /* ================================================
-       ORIENTATION-SPECIFIC STYLES
-       ================================================ */
-    @keyframes pulse-ring {
-      0% {
-        transform: scale(0.8);
-        opacity: 0.8;
-      }
+        /* 2. Top */
+        #cue-area.pos-top {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 360px;
+            max-width: 90vw;
+            height: 130px;
+            border-radius: 0 0 180px 180px;
+            border-top: none;
+            background: radial-gradient(circle at center 0%, var(--switch-color-main) 0%, var(--switch-color-dark) 100%);
+        }
+        #cue-area.pos-top:active { height: 100px; }
 
-      50% {
-        transform: scale(1);
-        opacity: 0.4;
-      }
+        /* 3. Left */
+        #cue-area.pos-left {
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            width: 130px;
+            height: 360px;
+            max-height: 80vh;
+            border-radius: 0 180px 180px 0;
+            border-left: none;
+            background: radial-gradient(circle at 0% 50%, var(--switch-color-main) 0%, var(--switch-color-dark) 100%);
+        }
+        #cue-area.pos-left:active { width: 100px; }
 
-      100% {
-        transform: scale(0.8);
-        opacity: 0.8;
-      }
-    }
+        /* 4. Right */
+        #cue-area.pos-right {
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+            width: 130px;
+            height: 360px;
+            max-height: 80vh;
+            border-radius: 180px 0 0 180px;
+            border-right: none;
+            background: radial-gradient(circle at 100% 50%, var(--switch-color-main) 0%, var(--switch-color-dark) 100%);
+        }
+        #cue-area.pos-right:active { width: 100px; }
 
-    .pulse-ring {
-      animation: pulse-ring 2s ease-in-out infinite;
-    }
+        /* 5. Center (Middle of Screen) */
+        #cue-area.pos-center {
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 240px;
+            height: 240px;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, var(--switch-color-main) 0%, var(--switch-color-dark) 100%);
+        }
+        #cue-area.pos-center:active { width: 220px; height: 220px; }
 
-    @keyframes glow {
+        @keyframes wave-pulse {
+            0%, 100% { box-shadow: 0 0 20px var(--switch-shadow); }
+            50% { box-shadow: 0 0 60px var(--switch-shadow); }
+        }
 
-      0%,
-      100% {
-        box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
-      }
+        .pulse {
+            animation: wave-pulse 6s infinite ease-in-out;
+        }
 
-      50% {
-        box-shadow: 0 0 60px rgba(255, 255, 255, 0.2);
-      }
-    }
+        /* --- Hint Text Positioning --- */
+        .hint-text {
+            position: absolute;
+            color: #ffffff;
+            font-family: system-ui, -apple-system, sans-serif;
+            font-size: 0.9rem;
+            font-weight: bold;
+            letter-spacing: 0.5em;
+            opacity: 0.2;
+            pointer-events: none;
+            text-transform: uppercase;
+            z-index: 11;
+            transition: all 0.4s ease;
+            white-space: nowrap;
+        }
 
-    .glow {
-      animation: glow 3s ease-in-out infinite;
-    }
+        .hint-text.pos-bottom { bottom: 20px; left: 50%; transform: translateX(-50%); }
+        .hint-text.pos-top { top: 20px; left: 50%; transform: translateX(-50%); }
+        .hint-text.pos-left { left: 20px; top: 50%; transform: translateY(-50%) rotate(-90deg); }
+        .hint-text.pos-right { right: 20px; top: 50%; transform: translateY(-50%) rotate(90deg); }
+        .hint-text.pos-center { top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: 0.4; }
 
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
 
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
+        /* Parent Settings Button */
+        #settings-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            color: white;
+            opacity: 0.3;
+            transition: opacity 0.3s, transform 0.2s;
+        }
 
-    .fade-in-up {
-      animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
+        #settings-btn:active {
+            transform: scale(0.9);
+            opacity: 0.8;
+        }
 
-    @keyframes pageTurn {
-      0% {
-        opacity: 1;
-        transform: translateX(0);
-      }
+        /* Settings Drawer */
+        #settings-drawer {
+            position: absolute;
+            top: 0;
+            right: -360px; /* Hidden state */
+            width: 340px;
+            max-width: 85vw; /* Responsive width for mobile */
+            height: 100%;
+            background: rgba(20, 20, 20, 0.95);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            transition: right 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            padding: 40px 24px;
+            color: white;
+            box-shadow: -10px 0 30px rgba(0,0,0,0.5);
+            overflow-y: auto; /* Enable vertical scrolling */
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        }
 
-      50% {
-        opacity: 0;
-        transform: translateX(50px);
-      }
+        #settings-drawer.open {
+            right: 0;
+        }
 
-      51% {
-        opacity: 0;
-        transform: translateX(-50px);
-      }
+        .setting-section {
+            margin-bottom: 30px;
+        }
 
-      100% {
-        opacity: 1;
-        transform: translateX(0);
-      }
-    }
+        .setting-label {
+            display: block;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin-bottom: 12px;
+            opacity: 0.6;
+            font-weight: 600;
+        }
 
-    .page-turn {
-      animation: pageTurn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-    }
+        .color-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }
 
-    /* Custom Scrollbar for Settings */
-    .settings-scroll::-webkit-scrollbar {
-      width: 8px;
-    }
+        .color-opt {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 12px;
+            cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.1);
+            transition: transform 0.2s, border-color 0.2s;
+        }
 
-    .settings-scroll::-webkit-scrollbar-track {
-      background: transparent;
-    }
+        .color-opt.active {
+            border-color: white;
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(255,255,255,0.2);
+        }
 
-    .settings-scroll::-webkit-scrollbar-thumb {
-      background-color: rgba(0, 0, 0, 0.2);
-      border-radius: 4px;
-      border: 2px solid transparent;
-      background-clip: content-box;
-    }
+        .range-btn {
+            width: 100%;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            text-align: left;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
 
-    .settings-scroll::-webkit-scrollbar-thumb:hover {
-      background-color: rgba(0, 0, 0, 0.4);
-    }
+        .range-btn.active {
+            background: rgba(255,255,255,0.12);
+            border-color: rgba(255,255,255,0.4);
+        }
 
-    /* High contrast scrollbar override */
-    .high-contrast .settings-scroll::-webkit-scrollbar-thumb {
-      background-color: rgba(255, 255, 255, 0.4);
-    }
+        .range-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
 
-    .high-contrast .settings-scroll::-webkit-scrollbar-thumb:hover {
-      background-color: rgba(255, 255, 255, 0.6);
-    }
-  </style>
-  <script src="quickstories.js?v=4"></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+        .range-preview {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            opacity: 0.9;
+        }
+
+        /* Toggle Button Style */
+        .toggle-btn {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            cursor: pointer;
+            border: 1px solid rgba(255,255,255,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 500;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .toggle-btn.active {
+            background: rgba(34, 197, 94, 0.2);
+            border-color: rgba(34, 197, 94, 0.5);
+            color: #4ade80;
+        }
+
+        .toggle-status {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* Position Options */
+        .pos-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .pos-btn {
+            padding: 12px 0;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            text-align: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pos-btn.active {
+            background: rgba(255,255,255,0.2);
+            border-color: white;
+            color: white;
+        }
+
+        /* Slider Style */
+        .slider-container {
+            width: 100%;
+            padding: 16px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .slider-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .slider-value {
+            color: white;
+            font-weight: 600;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.2);
+            outline: none;
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        #close-drawer {
+            margin-top: 10px;
+            width: 100%;
+            padding: 16px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+            letter-spacing: 0.05em;
+            transition: background 0.2s;
+        }
+        
+        #close-drawer:active {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Hold indicator circle */
+        #hold-progress {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .holding #hold-progress {
+            opacity: 1;
+            animation: spin 1s linear infinite;
+        }
+
+        /* Hold tooltip */
+        #hold-tooltip {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+            white-space: nowrap;
+            z-index: 60;
+        }
+
+        #hold-tooltip.show {
+            opacity: 1;
+        }
+
+        /* Custom scrollbar for webkit */
+        #settings-drawer::-webkit-scrollbar {
+            width: 6px;
+        }
+        #settings-drawer::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        #settings-drawer::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+            border-radius: 3px;
+        }
+    </style>
 </head>
-
 <body>
-  <div id="root"></div>
 
-  <script type="text/babel" data-type="module">
-    import React, { useState, useEffect, useRef, useCallback, useMemo } from 'https://esm.sh/react@18.3.1';
-    import { createRoot } from 'https://esm.sh/react-dom@18.3.1/client';
-    import { BookOpen, Play, Volume2, VolumeX, Sparkles, ArrowLeft, Loader2, Check, Star, Heart, Moon, Sun, Wand2, Settings, X, Eye, Vibrate, Palette, AlertTriangle, Trash2, Plus, Download, Pencil, SkipForward, Lock, Unlock, Layout, Type, RefreshCw, StopCircle, PenTool, Maximize2, Minimize2, Database } from 'https://esm.sh/lucide-react?deps=react@18.3.1,react-dom@18.3.1';
-    import { KokoroTTS } from 'https://esm.sh/kokoro-js';
-
-    const MODEL_ID = "onnx-community/Kokoro-82M-v1.0-ONNX";
-
-    // =============================================
-    // CONFIGURATION
-    // =============================================
-    const VOICES = [
-      { name: "af_heart", label: "Warm & Gentle", desc: "Natural Storyteller", emoji: "🌙", color: "bg-violet-500" },
-    ];
-
-    // Speed is now locked to Natural (1.0) for best pronunciation
-    const NATURAL_SPEED = 1.0;
-
-    const THEMES = [
-      {
-        id: 'default',
-        label: 'Default',
-        desc: 'Clean & Crisp',
-        bg: 'bg-slate-900', // Flat
-        text: 'text-white',
-        accent: 'indigo',
-        progress: 'bg-indigo-500',
-        coverBg: 'bg-slate-900', // Flat
-        coverText: 'text-white',
-        coverSub: 'text-indigo-200',
-        pulse: 'bg-white/10',
-        coverBorder: 'border-white', // High Contrast
-        coverElementBg: 'bg-white/5',
-        readingDark: true,
-
-        // PWA & Setup Screen
-        pageBg: 'bg-slate-50',
-        cardBg: 'bg-white',
-        textMain: 'text-slate-900',
-        textSub: 'text-slate-700',
-        border: 'border-slate-300',
-        inputBg: 'bg-slate-50',
-        highlight: 'indigo',
-        highlightBorder: 'border-indigo-500',
-        highlightBgLight: 'bg-indigo-50',
-        highlightFocus: 'focus:border-indigo-500',
-        highlightRing: 'ring-indigo-200',
-        highlightText: 'text-indigo-600'
-      },
-      {
-        id: 'buff',
-        label: 'Buff',
-        desc: 'Easy on Eyes',
-        bg: 'bg-[#F0EAD6]', // Buff Color
-        text: 'text-black', // Black text
-        accent: 'stone',
-        progress: 'bg-black', // Black progress
-        coverBg: 'bg-[#F0EAD6]', // Buff Color
-        coverText: 'text-black', // Black text
-        coverSub: 'text-stone-800', // Dark subtext
-        pulse: 'bg-black/10',
-        coverBorder: 'border-black', // Black border
-        coverElementBg: 'bg-black', // Solid black for icon visibility
-        readingDark: false,
-
-        // PWA & Setup Screen
-        pageBg: 'bg-[#F5F5DC]', // Beige
-        cardBg: 'bg-[#F0EAD6]', // Buff
-        textMain: 'text-black', // Black text
-        textSub: 'text-stone-800',
-        border: 'border-black',
-        inputBg: 'bg-white',
-        highlight: 'stone',
-        highlightBorder: 'border-stone-500',
-        highlightBgLight: 'bg-stone-100',
-        highlightFocus: 'focus:border-stone-500',
-        highlightRing: 'ring-stone-300',
-        highlightText: 'text-stone-700'
-      },
-      {
-        id: 'calm',
-        label: 'Calm Sky',
-        desc: 'Peaceful Blue',
-        bg: 'bg-blue-50', // Flat
-        text: 'text-slate-900', // Darker text for contrast on light bg
-        accent: 'sky',
-        progress: 'bg-sky-600',
-        coverBg: 'bg-sky-100', // Flat
-        coverText: 'text-sky-950',
-        coverSub: 'text-sky-950', // Darker
-        pulse: 'bg-sky-500/10',
-        coverBorder: 'border-sky-900', // High Contrast
-        coverElementBg: 'bg-black', // Solid black for icon visibility
-        readingDark: false,
-
-        // PWA & Setup Screen
-        pageBg: 'bg-slate-50',
-        cardBg: 'bg-white',
-        textMain: 'text-slate-900',
-        textSub: 'text-slate-700',
-        border: 'border-sky-700', // Darker for contrast
-        inputBg: 'bg-sky-50',
-        highlight: 'sky',
-        highlightBorder: 'border-sky-500',
-        highlightBgLight: 'bg-sky-50',
-        highlightFocus: 'focus:border-sky-500',
-        highlightRing: 'ring-sky-200',
-        highlightText: 'text-sky-600'
-      },
-      {
-        id: 'high-contrast-wb',
-        label: 'High Contrast',
-        desc: 'White on Black',
-        bg: 'bg-black', // Flat
-        text: 'text-white',
-        accent: 'white',
-        progress: 'bg-white',
-        coverBg: 'bg-black', // Flat
-        coverText: 'text-white',
-        coverSub: 'text-white',
-        pulse: 'bg-white/20',
-        coverBorder: 'border-white',
-        coverElementBg: 'bg-transparent',
-        readingDark: true,
-
-        // PWA & Setup Screen
-        pageBg: 'bg-black',
-        cardBg: 'bg-zinc-900',
-        textMain: 'text-white',
-        textSub: 'text-slate-300',
-        border: 'border-white',
-        inputBg: 'bg-black',
-        highlight: 'white',
-        highlightBorder: 'border-white',
-        highlightBgLight: 'bg-white/10',
-        highlightFocus: 'focus:border-white',
-        highlightRing: 'ring-white/30',
-        highlightText: 'text-white'
-      },
-      {
-        id: 'high-contrast-yb',
-        label: 'Yellow on Black',
-        desc: 'Accessibility',
-        bg: 'bg-black', // Flat
-        text: 'text-yellow-400',
-        accent: 'yellow',
-        progress: 'bg-yellow-400',
-        coverBg: 'bg-black', // Flat
-        coverText: 'text-yellow-400',
-        coverSub: 'text-yellow-400/80',
-        pulse: 'bg-yellow-400/20',
-        coverBorder: 'border-yellow-400',
-        coverElementBg: 'bg-transparent',
-        readingDark: true,
-
-        // PWA & Setup Screen
-        pageBg: 'bg-black',
-        cardBg: 'bg-zinc-900',
-        textMain: 'text-yellow-400',
-        textSub: 'text-yellow-200',
-        border: 'border-yellow-400',
-        inputBg: 'bg-black',
-        highlight: 'yellow',
-        highlightBorder: 'border-yellow-400',
-        highlightBgLight: 'bg-yellow-400/10',
-        highlightFocus: 'focus:border-yellow-400',
-        highlightRing: 'ring-yellow-200',
-        highlightText: 'text-yellow-400'
-      }
-    ];
-
-    // Optimized yield - use requestIdleCallback when available for non-urgent work
-    const yieldToBrowser = () => new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
-    const yieldIdle = (timeout = 100) => new Promise(r => {
-      if (window.requestIdleCallback) {
-        window.requestIdleCallback(r, { timeout });
-      } else {
-        setTimeout(r, 16);
-      }
-    });
-
-    // Detect device capabilities
-    const getDeviceInfo = () => {
-      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-      const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      const hasWebGPU = !!navigator.gpu;
-      const memory = navigator.deviceMemory || 4; // Default to 4GB if not available
-      const cores = navigator.hardwareConcurrency || 4;
-
-      return { isMobile, isSafari, isIOS, hasWebGPU, memory, cores };
-    };
-
-    // =============================================
-    // FULLSCREEN API (Cross-browser)
-    // =============================================
-    const isFullscreen = () => {
-      return !!(
-        document.fullscreenElement ||
-        document.webkitFullscreenElement ||
-        document.mozFullScreenElement ||
-        document.msFullscreenElement
-      );
-    };
-
-    // Check if running as installed PWA (standalone mode)
-    const isStandalone = () => {
-      return window.matchMedia('(display-mode: standalone)').matches ||
-        window.matchMedia('(display-mode: fullscreen)').matches ||
-        window.navigator.standalone === true; // iOS Safari
-    };
-    // =============================================
-    // AUDIO CACHE SYSTEM (IndexedDB)
-    // =============================================
-    const DB_NAME = 'StoryTapAudioCache';
-    const DB_VERSION = 2; // Upgraded to support LRU
-    const STORE_NAME = 'audio_v2';
-    const MAX_ITEMS = 300; // Limit to ~15MB of audio
-
-    // Cache the IndexedDB connection to avoid opening a new one on every read/write
-    let _dbInstance = null;
-    const openDB = () => {
-      if (_dbInstance) return Promise.resolve(_dbInstance);
-      return new Promise((resolve, reject) => {
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-        request.onerror = () => reject(request.error);
-        request.onsuccess = () => {
-          _dbInstance = request.result;
-          // Reset cached instance if the connection closes unexpectedly
-          _dbInstance.onclose = () => { _dbInstance = null; };
-          resolve(_dbInstance);
-        };
-        request.onupgradeneeded = (e) => {
-          const db = e.target.result;
-          // Clean up old v1 store if exists
-          if (db.objectStoreNames.contains('audio')) {
-            db.deleteObjectStore('audio');
-          }
-          if (!db.objectStoreNames.contains(STORE_NAME)) {
-            const store = db.createObjectStore(STORE_NAME, { keyPath: 'key' });
-            store.createIndex('ts', 'ts'); // Timestamp index for LRU
-          }
-        };
-      });
-    };
-
-    const getCachedAudio = async (key) => {
-      try {
-        const db = await openDB();
-        return new Promise((resolve, reject) => {
-          const tx = db.transaction(STORE_NAME, 'readwrite'); // Readwrite to update TS
-          const store = tx.objectStore(STORE_NAME);
-          const request = store.get(key);
-
-          request.onsuccess = () => {
-            const result = request.result;
-            if (result) {
-              // Update timestamp (LRU)
-              result.ts = Date.now();
-              store.put(result);
-              resolve(result.blob);
-            } else resolve(null);
-          };
-          request.onerror = () => resolve(null);
-
-          // Explicit transaction handlers to prevent hanging
-          tx.oncomplete = () => { /* Transaction completed successfully */ };
-          tx.onerror = () => {
-            console.warn('IndexedDB transaction error:', tx.error);
-            resolve(null);
-          };
-          tx.onabort = () => {
-            console.warn('IndexedDB transaction aborted');
-            resolve(null);
-          };
-        });
-      } catch (e) { return null; }
-    };
-
-    const setCachedAudio = async (key, blob) => {
-      try {
-        const db = await openDB();
-        return new Promise((resolve) => {
-          const tx = db.transaction(STORE_NAME, 'readwrite');
-          const store = tx.objectStore(STORE_NAME);
-
-          store.put({ key, blob, ts: Date.now() });
-
-          // Periodic cleanup (simple check)
-          const countReq = store.count();
-          countReq.onsuccess = () => {
-            if (countReq.result > MAX_ITEMS) {
-              // Delete oldest
-              const idx = store.index('ts');
-              const cursorReq = idx.openCursor(); // Ascending = oldest first
-              let deleted = 0;
-              cursorReq.onsuccess = (e) => {
-                const cursor = e.target.result;
-                if (cursor && deleted < (countReq.result - MAX_ITEMS) + 5) {
-                  cursor.delete();
-                  deleted++;
-                  cursor.continue();
-                }
-              };
-            }
-          };
-
-          tx.oncomplete = () => resolve(true);
-          tx.onerror = () => resolve(false);
-        });
-      } catch (e) { return false; }
-    };
-
-    // Create a hash key for caching (text + voice + speed + version)
-    // Version 4: Use explicit string keys to prevent hash collisions (fixes segment mixing)
-    const CACHE_VERSION = 4;
-    const getCacheKey = (text, voice, speed) => {
-      // Use full text as key to guarantee uniqueness for sentences
-      return `v${CACHE_VERSION}|${text}|${voice}|${speed}`;
-    };
-
-    // Get cache statistics (item count + total blob size)
-    const getCacheStats = async () => {
-      try {
-        const db = await openDB();
-        return new Promise((resolve) => {
-          const tx = db.transaction(STORE_NAME, 'readonly');
-          const store = tx.objectStore(STORE_NAME);
-          const countReq = store.count();
-          let totalSize = 0;
-          const cursorReq = store.openCursor();
-          cursorReq.onsuccess = (e) => {
-            const cursor = e.target.result;
-            if (cursor) {
-              if (cursor.value.blob) totalSize += cursor.value.blob.size || 0;
-              cursor.continue();
-            }
-          };
-          tx.oncomplete = () => resolve({ count: countReq.result, totalSize });
-          tx.onerror = () => resolve({ count: 0, totalSize: 0 });
-        });
-      } catch (e) { return { count: 0, totalSize: 0 }; }
-    };
-
-    // Delete ALL cached audio data from IndexedDB (all sessions)
-    const clearAllCachedAudio = async () => {
-      try {
-        _dbInstance = null; // Reset cached connection before deleting DB
-        await new Promise((resolve, reject) => {
-          const request = indexedDB.deleteDatabase(DB_NAME);
-          request.onsuccess = () => resolve();
-          request.onerror = () => reject(request.error);
-        });
-        // Also clear any Service Worker caches that may contain voice data
-        if ('caches' in window) {
-          const names = await caches.keys();
-          await Promise.all(names.map(name => caches.delete(name)));
-        }
-        return true;
-      } catch (e) { return false; }
-    };
-
-    // =============================================
-    // TEXT OPTIMIZATION FOR FASTER TTS
-    // =============================================
-    // Clean text for TTS processing
-    // Clean text for TTS processing - Added Flow & Cadence Enhancements
-    // Clean text for TTS processing - MAXIMIZE PAUSES
-    const cleanTextForTTS = (text) => {
-      if (!text) return '';
-      let t = text.trim();
-
-      // 1. Collapse duplicate chars
-      t = t.replace(/(.)\1{2,}/gi, '$1$1');
-
-      // 2. Handle Independent Dashes (Space - Space) -> Period
-      // Force full stop pause for dramatic dashes
-      // Note: Hyphenated words (e.g. "semi-circle") are ignored because they lack spaces
-      t = t.replace(/ - /g, '. ');
-      t = t.replace(/—/g, '. ');
-      t = t.replace(/–/g, '. ');
-      t = t.replace(/--+/g, '. ');
-
-      // 3. Handle Commas -> Period
-      // Force full stop pause for commas (Prevents rushing)
-      t = t.replace(/,/g, '. ');
-
-      // 4. Handle Semi-colons -> Period
-      t = t.replace(/;/g, '. ');
-
-      // 5. Handle Ellipses -> Period
-      // Convert "..." to "." to avoid stuttering/glitching
-      t = t.replace(/\.\.\./g, '. ');
-
-      // 6. Enhance Sentence Breaks
-      // Ensure punctuation has space after it
-      t = t.replace(/([.?!])(?=\S)/g, '$1 ');
-
-      // 7. Text Cleanup
-      t = t.replace(/[""“]([^""”]+)[""”]/g, '$1'); // Strip quotes
-      t = t.replace(/[""'''"']/g, '');             // Strip remaining quotes
-      t = t.replace(/\.\.+/g, '.');                // Fix ".." -> "."
-      t = t.replace(/\. \./g, '.');                // Fix ". ." -> "."
-      t = t.replace(/\s+/g, ' ');                  // Normalize spaces
-
-      return t;
-    };
-
-    // Split story text into LOGICAL PAGES (Sentences & Paragraphs)
-    // - Respects paragraph breaks (newlines)
-    // - Splits paragraphs by sentence boundaries for natural pacing
-    // - Creates 1-2 sentences per page based on punctuation
-    const splitIntoSentences = (text) => {
-      if (!text) return [];
-
-      // 1. Split by newlines to preserve paragraph structure
-      const paragraphs = text.split(/\n+/).map(l => l.trim()).filter(l => l);
-      const pages = [];
-
-      for (const para of paragraphs) {
-        // Remove numbered list prefixes (1., 2., etc.)
-        const cleaned = para.replace(/^\d+[\.\)]\s*/, '');
-
-        // 2. Split each paragraph by sentence delimiters (.!?)
-        // This creates natural page breaks at sentence boundaries
-        const sentences = cleaned
-          .replace(/([.!?]+)(?=\s+|$)/g, '$1|') // Mark sentence boundaries
-          .split('|')
-          .map(s => s.trim())
-          .filter(s => s);
-
-        if (sentences.length > 0) {
-          pages.push(...sentences);
-        } else {
-          // Fallback for text without punctuation
-          pages.push(cleaned);
-        }
-      }
-
-      return pages;
-    };
-
-    // =============================================
-    // AUDIO CUE ENGINE
-    // =============================================
-    const useAudioCues = (enabled, vibrationEnabled) => {
-      const ctxRef = useRef(null);
-
-      const getCtx = useCallback(() => {
-        if (!ctxRef.current) {
-          ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        }
-        if (ctxRef.current.state === 'suspended') {
-          ctxRef.current.resume().catch(() => { });
-        }
-        return ctxRef.current;
-      }, []);
-
-      const vibrate = useCallback((pattern) => {
-        if (vibrationEnabled && navigator.vibrate) {
-          try { navigator.vibrate(pattern); } catch (e) { }
-        }
-      }, [vibrationEnabled]);
-
-      const play = useCallback((type) => {
-        // Haptic patterns tailored for each cue type
-        const haptics = {
-          tap: 25,
-          story_start: [40, 40, 80],
-          story_end: [80, 40, 80, 40, 150],
-          ready: [60, 30, 60],        // Strong double-pulse: "your turn!"
-          advance: 20,
-          busy: [15, 15, 15],         // Quick triple-buzz: "wait"
-          cover_tap: [30, 20, 30],    // Gentle nudge
-          download_done: [50, 30, 80] // Celebration
-        };
-        vibrate(haptics[type] || 15);
-
-        if (!enabled) return;
-
-        try {
-          const ctx = getCtx();
-          const now = ctx.currentTime;
-
-          if (type === 'tap') {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(880, now);
-            osc.frequency.exponentialRampToValueAtTime(1320, now + 0.05);
-            gain.gain.setValueAtTime(0.12, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-            osc.connect(gain).connect(ctx.destination);
-            osc.start(now); osc.stop(now + 0.1);
-          } else if (type === 'story_start') {
-            [523.25, 659.25, 783.99, 1046.50].forEach((freq, i) => {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.type = 'triangle';
-              osc.frequency.value = freq;
-              gain.gain.setValueAtTime(0, now + i * 0.1);
-              gain.gain.linearRampToValueAtTime(0.1, now + i * 0.1 + 0.03);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.1 + 0.35);
-              osc.connect(gain).connect(ctx.destination);
-              osc.start(now + i * 0.1); osc.stop(now + i * 0.1 + 0.4);
-            });
-          } else if (type === 'ready') {
-            // Friendly two-tone "ding-ding" — clearly signals "your turn to tap!"
-            [698.46, 880].forEach((freq, i) => {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.type = 'sine';
-              osc.frequency.value = freq;
-              gain.gain.setValueAtTime(0, now + i * 0.15);
-              gain.gain.linearRampToValueAtTime(0.14, now + i * 0.15 + 0.02);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.35);
-              osc.connect(gain).connect(ctx.destination);
-              osc.start(now + i * 0.15); osc.stop(now + i * 0.15 + 0.4);
-            });
-          } else if (type === 'cover_tap') {
-            // Warm welcoming tone for the cover page
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(523.25, now);
-            osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.15);
-            gain.gain.setValueAtTime(0, now);
-            gain.gain.linearRampToValueAtTime(0.1, now + 0.02);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
-            osc.connect(gain).connect(ctx.destination);
-            osc.start(now); osc.stop(now + 0.35);
-          } else if (type === 'download_done') {
-            // Happy completion chime
-            [523.25, 659.25, 783.99].forEach((freq, i) => {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.type = 'triangle';
-              osc.frequency.value = freq;
-              gain.gain.setValueAtTime(0, now + i * 0.08);
-              gain.gain.linearRampToValueAtTime(0.1, now + i * 0.08 + 0.02);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.08 + 0.3);
-              osc.connect(gain).connect(ctx.destination);
-              osc.start(now + i * 0.08); osc.stop(now + i * 0.08 + 0.35);
-            });
-          } else if (type === 'advance') {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(440, now);
-            osc.frequency.exponentialRampToValueAtTime(660, now + 0.12);
-            gain.gain.setValueAtTime(0, now);
-            gain.gain.linearRampToValueAtTime(0.05, now + 0.03);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
-            osc.connect(gain).connect(ctx.destination);
-            osc.start(now); osc.stop(now + 0.2);
-          } else if (type === 'story_end') {
-            [[523.25, 0], [659.25, 0.12], [783.99, 0.24], [1046.50, 0.36]].forEach(([freq, delay]) => {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.type = 'triangle';
-              osc.frequency.value = freq;
-              gain.gain.setValueAtTime(0, now + delay);
-              gain.gain.linearRampToValueAtTime(0.12, now + delay + 0.02);
-              gain.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.5);
-              osc.connect(gain).connect(ctx.destination);
-              osc.start(now + delay); osc.stop(now + delay + 0.6);
-            });
-          } else if (type === 'busy') {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-            osc.type = 'sine';
-            osc.frequency.value = 200;
-            gain.gain.setValueAtTime(0.06, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
-            osc.connect(gain).connect(ctx.destination);
-            osc.start(now); osc.stop(now + 0.15);
-          }
-        } catch (e) {
-          console.warn('Audio cue error:', e);
-        }
-      }, [enabled, getCtx, vibrate]);
-
-      // Suspend AudioContext when not in use to save resources
-      const suspend = useCallback(() => {
-        if (ctxRef.current && ctxRef.current.state === 'running') {
-          ctxRef.current.suspend().catch(() => { });
-        }
-      }, []);
-
-      // Cleanup on unmount
-      useEffect(() => {
-        return () => {
-          if (ctxRef.current) {
-            ctxRef.current.close().catch(() => { });
-          }
-        };
-      }, []);
-
-      return { play, vibrate, suspend };
-    };
-
-    // =============================================
-    // MAIN APPLICATION
-    // =============================================
-    const DEFAULT_STORY_TITLE = "The Brave Little Bear";
-    const DEFAULT_STORY_TEXT = "Once upon a time, there was a little bear who lived in a cozy cave.\nThe bear loved honey more than anything in the world.\nOne sunny morning, the bear smelled something sweet.\nIt was coming from a tall, tall tree!\nThe bear looked up and saw a beehive.\nBuzz buzz buzz, sang the busy bees.\nThe little bear was scared, but also very hungry.\nSo the bear took a deep breath and started to climb.\nUp, up, up went the brave little bear!\nThe bees flew around, but the bear kept going.\nFinally, the bear reached the golden honey.\nYum yum yum! It was the sweetest honey ever.\nThe bear climbed down with a happy, sticky smile.\nAnd from that day on, everyone called the bear the bravest in the forest.\nThe end.";
-    const STORAGE_KEY = 'storytap_prefs_v1';
-    const App = () => {
-      // Load preferences
-      const prefs = useMemo(() => {
-        try {
-          return JSON.parse(localStorage.getItem(STORAGE_KEY)) || {};
-        } catch { return {}; }
-      }, []);
-
-      const [mode, setMode] = useState('library');
-      const [storyTitle, setStoryTitle] = useState(prefs.storyTitle || DEFAULT_STORY_TITLE);
-      const [rawText, setRawText] = useState(prefs.rawText || DEFAULT_STORY_TEXT);
-      const [sentences, setSentences] = useState([]);
-      const [currentIndex, setCurrentIndex] = useState(-1);
-      const [voice, setVoice] = useState(prefs.voice || VOICES[0].name);
-      const speed = NATURAL_SPEED; // Locked to 1.0 for proper pronunciation
-      const [isTransitioning, setIsTransitioning] = useState(false);
-
-      // New Accessibility & Option States
-      const [showBoundary, setShowBoundary] = useState(prefs.showBoundary !== false); // Default true
-      const [boundaryColor, setBoundaryColor] = useState(prefs.boundaryColor || 'yellow');
-      const [showTitlePage, setShowTitlePage] = useState(prefs.showTitlePage !== false); // Default true
-      const [endAction, setEndAction] = useState(prefs.endAction || 'stop'); // stop, library, loop, next
-
-      // Lock Button Timer State
-      const [isHoldingLock, setIsHoldingLock] = useState(false);
-      const [lockHoldProgress, setLockHoldProgress] = useState(0);
-      const [unlockAction, setUnlockAction] = useState(prefs.unlockAction || 'hold2'); // hold1, hold2, hold3, tripleTap
-      const [lockFeedback, setLockFeedback] = useState('');
-      const lockTapRef = useRef({ count: 0, lastTime: 0 });
-      const lockStartRef = useRef(0);
-
-      const [isHoldingFS, setIsHoldingFS] = useState(false);
-      const [fsHoldProgress, setFsHoldProgress] = useState(0);
-      const fsHoldTimerRef = useRef(null);
-      const fsTapRef = useRef({ count: 0, lastTime: 0 });
-      const [fsFeedback, setFsFeedback] = useState('');
-
-      const [exitFeedback, setExitFeedback] = useState('');
-      const exitTapRef = useRef({ count: 0, lastTime: 0 });
-
-      const [settingsFeedback, setSettingsFeedback] = useState('');
-      const settingsTapRef = useRef({ count: 0, lastTime: 0 });
-      const fsStartRef = useRef(0);
-      const ignoreClickRef = useRef(false);
-
-      // Engine state
-      const [modelProgress, setModelProgress] = useState(0);
-      const [modelStatus, setModelStatus] = useState('');
-      const [loadError, setLoadError] = useState(null);
-      const [isGenerating, setIsGenerating] = useState(false);
-      const [isPlaying, setIsPlaying] = useState(false);
-
-      const [storyToPlay, setStoryToPlay] = useState(null);
-      const currentStoryIdRef = useRef(null); // Tracks ID of currently playing story (survives storyToPlay null-out)
-      const [editingId, setEditingId] = useState(null);
-      const [viewFolder, setViewFolder] = useState(null); // 'Simple Stories' or null
-      const [showSettings, setShowSettings] = useState(false);
-      const [isFullscreenMode, setIsFullscreenMode] = useState(isFullscreen());
-      // Library & Processing Queue
-      const [library, setLibrary] = useState(() => {
-        try {
-          const saved = JSON.parse(localStorage.getItem('storytap_library_v1')) || [];
-          return saved.map(s => ({
-            ...s,
-            status: s.status || 'ready',
-            progress: s.progress || 100,
-            voice: s.voice || 'af_heart'
-            // Speed no longer stored (always uses NATURAL_SPEED)
-          }));
-        }
-        catch { return []; }
-      });
-
-      // Cache statistics (for storage indicator)
-      const [cacheStats, setCacheStats] = useState({ count: 0, totalSize: 0 });
-      const updateCacheStats = useCallback(async () => {
-        const stats = await getCacheStats();
-        setCacheStats(stats);
-      }, []);
-      // Debounce library persistence — avoids thrashing localStorage during download progress updates
-      const librarySaveTimerRef = useRef(null);
-      useEffect(() => {
-        if (librarySaveTimerRef.current) clearTimeout(librarySaveTimerRef.current);
-        librarySaveTimerRef.current = setTimeout(() => {
-          localStorage.setItem('storytap_library_v1', JSON.stringify(library));
-        }, 500);
-        return () => { if (librarySaveTimerRef.current) clearTimeout(librarySaveTimerRef.current); };
-      }, [library]);
-
-      // LOAD SIMPLE STORIES (JS Variable)
-      // This is robust for local file:// usage where fetch() is blocked by CORS
-      useEffect(() => {
-        const loadStories = () => {
-          const data = window.QUICK_STORIES;
-          if (data && Array.isArray(data)) {
-            setLibrary(prev => {
-              const newLib = [...prev];
-              let changed = false;
-              data.forEach(s => {
-                const id = 'simple_' + s.title.toLowerCase().replace(/[^a-z0-9]/g, '');
-                const existingIdx = newLib.findIndex(existing => existing.id === id);
-
-                if (existingIdx === -1) {
-                  // Add new
-                  newLib.push({
-                    id,
-                    title: s.title,
-                    text: s.text,
-                    voice: 'af_heart',
-                    // Speed no longer stored (always uses NATURAL_SPEED)
-                    status: 'ready',
-                    progress: 100,
-                    folder: 'Simple Stories'
-                  });
-                  changed = true;
-                } else {
-                  // Update existing if changed (reflects file edits)
-                  const ex = newLib[existingIdx];
-                  if (ex.text !== s.text || ex.title !== s.title) {
-                    newLib[existingIdx] = { ...ex, title: s.title, text: s.text };
-                    changed = true;
-                  }
-                }
-              });
-              return changed ? newLib : prev;
-            });
-          }
-        };
-
-        // Try immediately
-        loadStories();
-
-        // And retry briefly in case of race condition
-        setTimeout(loadStories, 100);
-        setTimeout(loadStories, 500);
-      }, []);
-
-      // Processing Queue
-      const processingRef = useRef(null);
-      const lockHoldTimerRef = useRef(null);
-
-      // Save Preferences (single consolidated save — see note below about removed duplicate)
-      // Speed is no longer saved to preferences (locked to NATURAL_SPEED)
-      useEffect(() => {
-        const settings = {
-          storyTitle, rawText, voice, textSize, theme,
-          soundCuesEnabled, vibrationEnabled, allowSkip,
-          showBoundary, boundaryColor, showTitlePage, endAction,
-          unlockAction
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-      }, [storyTitle, rawText, voice, textSize, theme, soundCuesEnabled, vibrationEnabled, allowSkip, showBoundary, boundaryColor, showTitlePage, endAction, unlockAction]);
-
-      // Cancel a download in progress
-      const cancelDownload = (storyId, e) => {
-        if (e) e.stopPropagation();
-        if (processingRef.current === storyId) {
-          processingRef.current = null;
-        }
-        setLibrary(prev => prev.map(s => s.id === storyId ? { ...s, status: 'ready', progress: 0 } : s));
-      };
-
-      const processStory = async (story) => {
-        processingRef.current = story.id;
-
-        const sentences = splitIntoSentences(story.text);
-
-        // Plain title in cache list (removed "Title:" prefix for cleaner speech)
-        const titleText = story.title;
-        // Also cache "The End." so it's ready instantly
-        const allItemsToCache = [titleText, ...sentences, "The End."];
-        const total = allItemsToCache.length;
-
-        if (sentences.length === 0) {
-          setLibrary(prev => prev.map(s => s.id === story.id ? { ...s, status: 'cached', progress: 100 } : s));
-          processingRef.current = null;
-          return;
-        }
-
-        // Ensure model is loaded before we start downloading
-        if (!ttsRef.current) {
-          setModelStatus('Loading voice engine for download...');
-          const success = await loadKokoroModel();
-          if (!success) {
-            console.error('Failed to load model for download');
-            setLibrary(prev => prev.map(s => s.id === story.id ? { ...s, status: 'ready', progress: 0 } : s));
-            processingRef.current = null;
-            return;
-          }
-        }
-
-        // Mobile-aware batching: smaller batches + longer delays on mobile
-        const device = deviceInfoRef.current;
-        const isMobile = device.isMobile;
-        const BATCH_SIZE = isMobile ? 1 : 3; // Process 1 item at a time on mobile
-        const BATCH_DELAY = isMobile ? 400 : 200; // Longer breathing room on mobile
-        const ITEM_DELAY = isMobile ? 150 : 50; // More time between items on mobile
-
-        let completed = 0;
-        let consecutiveErrors = 0;
-        const MAX_CONSECUTIVE_ERRORS = 5; // Bail out if too many failures in a row
-
-        // Set initial progress to show download has started
-        setLibrary(prev => prev.map(s => s.id === story.id ? {
-          ...s,
-          progress: 0,
-          progressText: `0 of ${total}`
-        } : s));
-
-        for (let i = 0; i < allItemsToCache.length; i++) {
-          // Check for cancellation before each item
-          if (processingRef.current !== story.id) {
-            console.log('Download cancelled for story:', story.id);
-            return;
-          }
-
-          try {
-            // Generate and cache audio (uses story's voice, speed locked to NATURAL_SPEED)
-            await generateKokoroAudio(allItemsToCache[i], story.voice, NATURAL_SPEED, true);
-            consecutiveErrors = 0; // Reset on success
-          } catch (e) {
-            console.warn('Error caching item:', e);
-            consecutiveErrors++;
-
-            // Bail out if device is struggling (too many failures in a row)
-            if (consecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
-              console.error('Too many consecutive errors, aborting download');
-              setLibrary(prev => prev.map(s => s.id === story.id ? { ...s, status: 'ready', progress: 0 } : s));
-              processingRef.current = null;
-              return;
-            }
-          }
-
-          completed++;
-          const progressPercent = Math.round((completed / total) * 100);
-
-          // OPTIMIZATION: Only update UI every 5 items to reduce re-renders
-          // This dramatically improves performance on older devices
-          const shouldUpdateUI = (i % 5 === 4) || (i === allItemsToCache.length - 1);
-
-          if (shouldUpdateUI) {
-            setLibrary(prev => prev.map(s => s.id === story.id ? {
-              ...s,
-              progress: progressPercent,
-              progressText: `${completed} of ${total}`
-            } : s));
-          }
-
-          // Always yield to browser between items to keep UI responsive
-          await yieldToBrowser();
-
-          // Longer pause every BATCH_SIZE items for UI responsiveness
-          if (i % BATCH_SIZE === BATCH_SIZE - 1) {
-            await new Promise(r => setTimeout(r, BATCH_DELAY));
-            await yieldIdle(isMobile ? 200 : 100);
-          } else {
-            await new Promise(r => setTimeout(r, ITEM_DELAY));
-          }
-        }
-
-        if (processingRef.current === story.id) {
-          setLibrary(prev => prev.map(s => s.id === story.id ? {
-            ...s,
-            status: 'cached',
-            progress: 100,
-            progressText: null
-          } : s));
-          processingRef.current = null;
-          playCue('download_done');
-
-          // Update cache stats display
-          updateCacheStats();
-        }
-      };
-
-      // Watch for stories that need processing (Download button was pressed)
-      useEffect(() => {
-        if (mode !== 'library') return; // Never cache while editing — too disruptive
-        const task = library.find(s => s.status === 'processing');
-        // Process if there's a task and we're not already processing it
-        if (task && (!processingRef.current || processingRef.current !== task.id)) {
-          processStory(task);
-        }
-      }, [library, mode]);
-
-      // Track fullscreen state changes
-      useEffect(() => {
-        const handleFullscreenChange = () => {
-          setIsFullscreenMode(isFullscreen());
-        };
-        document.addEventListener('fullscreenchange', handleFullscreenChange);
-        document.addEventListener('webkitfullscreenchange', handleFullscreenChange);
-        document.addEventListener('mozfullscreenchange', handleFullscreenChange);
-        document.addEventListener('MSFullscreenChange', handleFullscreenChange);
-        return () => {
-          document.removeEventListener('fullscreenchange', handleFullscreenChange);
-          document.removeEventListener('webkitfullscreenchange', handleFullscreenChange);
-          document.removeEventListener('mozfullscreenchange', handleFullscreenChange);
-          document.removeEventListener('MSFullscreenChange', handleFullscreenChange);
-        };
-      }, []);
-
-      // Handle fullscreen toggle (stops event propagation)
-      const handleFullscreenToggle = useCallback(() => {
-        const elem = document.documentElement;
-        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-          if (elem.requestFullscreen) elem.requestFullscreen().catch(err => console.warn("Fullscreen error:", err));
-          else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-          setIsFullscreenMode(true);
-        } else {
-          if (document.exitFullscreen) document.exitFullscreen();
-          else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
-          setIsFullscreenMode(false);
-        }
-      }, []);
-
-      // Auto-split text into pages/sentences for preview ONLY in Create Mode
-      // This prevents stale rawText from overwriting the story when loading a book
-      useEffect(() => {
-        if (mode === 'create') {
-          setSentences(splitIntoSentences(rawText));
-        }
-      }, [rawText, mode]);
-
-      // Update cache stats when on library page
-      useEffect(() => {
-        if (mode === 'library') {
-          updateCacheStats();
-        }
-      }, [mode, library, updateCacheStats]);
-
-      const createNewBook = () => {
-        setStoryTitle('');
-        setRawText('');
-        setStoryColor('indigo');
-        setEditingId(null);
-        setMode('create');
-      };
-
-      const editBook = (story, e) => {
-        e.stopPropagation();
-        setStoryTitle(story.title);
-        setRawText(story.text);
-        setVoice(story.voice || VOICES[0].name);
-        // Speed is now locked to NATURAL_SPEED (1.0)
-        setStoryColor(story.color || 'indigo');
-        setEditingId(story.id);
-        setMode('create');
-      };
-
-      const saveCreatedBook = () => {
-        if (!storyTitle.trim()) return;
-
-        const storyData = {
-          title: storyTitle,
-          text: rawText,
-          voice,
-          // Speed no longer saved (always uses NATURAL_SPEED)
-          color: storyColor,
-          status: 'ready',  // Save without auto-caching — user can Download to pre-cache
-          progress: 100
-        };
-
-        if (editingId) {
-          setLibrary(prev => prev.map(s => s.id === editingId ? { ...storyData, id: editingId } : s));
-          setEditingId(null);
-        } else {
-          setLibrary(prev => [{ ...storyData, id: Date.now() }, ...prev]);
-        }
-        setMode('library');
-      };
-
-      // Only allow playing stories that are fully cached (downloaded)
-      const loadBookForPlay = (story) => {
-        if (story.status !== 'cached') return; // Must download first!
-        setStoryTitle(story.title);
-        setRawText(story.text);
-        setVoice(story.voice || VOICES[0].name);
-        // Speed is now locked to NATURAL_SPEED (1.0)
-        setStoryToPlay(story);
-      };
-      const preloadBook = (story, e) => {
-        e.stopPropagation();
-        setLibrary(prev => prev.map(s => s.id === story.id ? { ...s, status: 'processing', progress: 0 } : s));
-      };
-
-      const deleteBook = async (story, e) => {
-        e.stopPropagation();
-
-        const isCached = story.status === 'cached';
-
-        if (isCached) {
-          // First press: Delete cached audio, keep the story
-          if (confirm(`Delete cached audio for "${story.title}"?\n\nThe story will remain in your library but you'll need to re-download it to play.`)) {
-            // Delete all cached audio entries for this story's sentences
-            const sentences = story.text.split(/(?<=[.!?])\s+/).filter(s => s.trim());
-
-            try {
-              const db = await openDB();
-              const tx = db.transaction(STORE_NAME, 'readwrite');
-              const store = tx.objectStore(STORE_NAME);
-
-              // Delete each sentence's cached audio
-              for (const sentence of sentences) {
-                const key = getCacheKey(sentence.trim(), story.voice, NATURAL_SPEED);
-                store.delete(key);
-              }
-
-              // Also delete "The End." audio if it exists
-              store.delete(getCacheKey("The End.", story.voice, NATURAL_SPEED));
-
-              await new Promise((resolve) => {
-                tx.oncomplete = () => resolve();
-                tx.onerror = () => resolve(); // Still resolve on error
-              });
-            } catch (e) {
-              console.warn('Error deleting cached audio:', e);
-            }
-
-            // Update story status to 'ready' (no longer cached)
-            setLibrary(prev => prev.map(s => s.id === story.id ? { ...s, status: 'ready', progress: 0 } : s));
-            playCue('tap');
-
-            // Update cache stats display
-            updateCacheStats();
-          }
-        } else {
-          // Second press (or first press if not cached): Delete the story entirely
-          if (confirm(`Permanently delete "${story.title}"?\n\nThis cannot be undone.`)) {
-            setLibrary(prev => prev.filter(s => s.id !== story.id));
-            playCue('tap');
-          }
-        }
-      };
-      const [soundCuesEnabled, setSoundCuesEnabled] = useState(prefs.soundCuesEnabled ?? true);
-      const [vibrationEnabled, setVibrationEnabled] = useState(prefs.vibrationEnabled ?? true);
-      const [theme, setTheme] = useState(prefs.theme || 'default');
-      const [textSize, setTextSize] = useState(prefs.textSize || 'huge');
-      const [allowSkip, setAllowSkip] = useState(prefs.allowSkip ?? false);
-      const [showEditControls, setShowEditControls] = useState(false);
-      const [storyColor, setStoryColor] = useState('indigo');
-
-      // Exit button hold state
-      const [isHoldingExit, setIsHoldingExit] = useState(false);
-      const [holdProgress, setHoldProgress] = useState(0);
-      const holdTimerRef = useRef(null);
-      const holdStartRef = useRef(null);
-      const lastInteractionRef = useRef(0);
-
-      // Settings hold state (child-safe — requires 2s hold to open on library page)
-      const [isHoldingSettings, setIsHoldingSettings] = useState(false);
-      const [settingsHoldProgress, setSettingsHoldProgress] = useState(0);
-      const settingsHoldTimerRef = useRef(null);
-      const settingsHoldStartRef = useRef(null);
-
-      // Refs
-      const ttsRef = useRef(null);
-      const audioRef = useRef(null);
-      const cacheRef = useRef({});
-      const deviceInfoRef = useRef(getDeviceInfo());
-      const initPromiseRef = useRef(null);
-
-      const { play: playCue } = useAudioCues(soundCuesEnabled, vibrationEnabled);
-      const currentTheme = THEMES.find(t => t.id === theme) || THEMES[0];
-
-      const getTextSizeClass = () => {
-        if (textSize === 'huge') return 'text-4xl md:text-6xl lg:text-7xl';
-        if (textSize === 'large') return 'text-3xl md:text-5xl lg:text-6xl';
-        return 'text-2xl md:text-4xl lg:text-5xl';
-      };
-
-      // =============================================
-      // KOKORO TTS ENGINE (Primary)
-      // =============================================
-      const loadKokoroModel = useCallback(async () => {
-        if (ttsRef.current) return true;
-
-        if (initPromiseRef.current) return initPromiseRef.current;
-
-        initPromiseRef.current = (async () => {
-          const device = deviceInfoRef.current;
-          setLoadError(null);
-          setModelProgress(0);
-          setModelStatus('Initializing...');
-
-          try {
-            await yieldToBrowser();
-
-            // Determine optimal settings based on device
-            let useWebGPU = false;
-            let dtype = 'q8'; // Default to q8 for stability
-
-            // Only try WebGPU on desktop Chrome/Edge with good specs
-            if (!device.isMobile && !device.isSafari && device.hasWebGPU && device.memory >= 8) {
-              try {
-                const adapter = await navigator.gpu.requestAdapter();
-                if (adapter) {
-                  const gpuDevice = await adapter.requestDevice();
-                  gpuDevice.destroy();
-                  useWebGPU = true;
-                  dtype = 'fp32';
-                  setModelStatus('Using GPU acceleration...');
-                }
-              } catch (e) {
-                console.warn('WebGPU not available:', e);
-              }
-            }
-
-            // Tiered model quality based on device capabilities
-            if (device.isMobile || device.memory < 4 || device.cores < 4) {
-              dtype = 'q4';
-              setModelStatus('Loading compact model...');
-            } else if (device.memory < 6 && !useWebGPU) {
-              dtype = 'q4';
-              setModelStatus('Loading optimized model...');
-            } else if (!useWebGPU) {
-              dtype = 'q8';
-              setModelStatus('Loading high-quality model...');
-            } else {
-              setModelStatus('Loading premium model...');
-            }
-
-            console.log(`Loading Kokoro TTS: device=${useWebGPU ? 'webgpu' : 'wasm'}, dtype=${dtype}`);
-
-            const tts = await KokoroTTS.from_pretrained(MODEL_ID, {
-              dtype,
-              device: useWebGPU ? 'webgpu' : 'wasm',
-              progress_callback: (p) => {
-                if (p.status === 'progress' && p.total) {
-                  const pct = Math.round((p.loaded / p.total) * 100);
-                  setModelProgress(pct);
-                  if (pct < 30) setModelStatus('Downloading voice model...');
-                  else if (pct < 70) setModelStatus('Preparing voice engine...');
-                  else if (pct < 95) setModelStatus('Almost ready...');
-                  else setModelStatus('Finalizing...');
-                }
-              }
-            });
-
-            ttsRef.current = tts;
-            console.log('Kokoro TTS loaded successfully');
-            return true;
-
-          } catch (error) {
-            console.error('Kokoro TTS failed to load:', error);
-            setLoadError(`Voice engine error: ${error.message || 'Unknown error'}`);
-            initPromiseRef.current = null; // Reset promise on error so we can retry
-            return false;
-          }
-        })();
-
-        return initPromiseRef.current;
-      }, []);
-
-      // NOTE: Model is NOT auto-loaded on mount anymore
-      // It only loads when actually needed (first uncached sentence playback)
-      // This prevents lag in the menu on slower devices
-
-      // Load audio from IndexedDB cache ONLY (no generation)
-      // This can run without the TTS model being loaded
-      const loadFromCache = useCallback(async (text, voiceOpt, speedOpt) => {
-        const useVoice = voiceOpt || voice;
-        const useSpeed = speedOpt || speed;
-        const cleanText = cleanTextForTTS(text);
-        const cacheKey = getCacheKey(cleanText, useVoice, useSpeed);
-
-        try {
-          const cachedBlob = await getCachedAudio(cacheKey);
-          if (cachedBlob) {
-            return URL.createObjectURL(cachedBlob);
-          }
-        } catch (e) { /* Cache miss */ }
-        return null;
-      }, [voice]); // speed is now constant (NATURAL_SPEED)
-
-      // Generate audio with Kokoro + persistent cache
-      // skipCacheCheck: true when called from processStory (we know it's not cached)
-      const generateKokoroAudio = useCallback(async (text, voiceOpt, speedOpt, skipCacheCheck = false) => {
-        const useVoice = voiceOpt || voice;
-        const useSpeed = speedOpt || speed;
-
-        // Clean text FIRST — normalize elongated letters, whitespace, etc.
-        const cleanText = cleanTextForTTS(text);
-        const cacheKey = getCacheKey(cleanText, useVoice, useSpeed);
-
-        // Check persistent cache first (skip if called from download process)
-        if (!skipCacheCheck) {
-          try {
-            const cachedBlob = await getCachedAudio(cacheKey);
-            if (cachedBlob) {
-              return URL.createObjectURL(cachedBlob);
-            }
-          } catch (e) { /* Cache miss, generate fresh */ }
-        }
-
-        // Need model to generate - ensure it's loaded
-        if (!ttsRef.current) {
-          const success = await loadKokoroModel();
-          if (!success) return null;
-        }
-
-        try {
-          await yieldIdle(10);
-
-          const audio = await ttsRef.current.generate(cleanText, { voice: useVoice, speed: useSpeed });
-          const resultBlob = audio.toBlob();
-
-          // Save to persistent cache (don't await, do in background)
-          setCachedAudio(cacheKey, resultBlob).catch(() => { });
-
-          return URL.createObjectURL(resultBlob);
-
-        } catch (error) {
-          console.error('Kokoro generation error:', error);
-          return null;
-        }
-      }, [voice, loadKokoroModel]); // speed is now constant (NATURAL_SPEED)
-
-      // =============================================
-      // UNIFIED SPEECH SYSTEM
-      // =============================================
-      // NOTE: Audio is ONLY cached via the Download button (processStory function)
-      // No background prefetching or on-demand generation during playback
-      // This ensures the app never stalls on low-power devices
-
-      // Play a sentence from cache ONLY (stories must be downloaded first)
-      const playSentence = useCallback(async (idx, list) => {
-        if (idx < -1 || idx >= list.length) return; // Allow -1 for Title
-
-        // Stop current audio
-        setIsPlaying(false);
-        if (audioRef.current) {
-          try { audioRef.current.pause(); audioRef.current.currentTime = 0; } catch (e) { }
-        }
-        window.speechSynthesis?.cancel();
-
-        const text = idx === -1 ? storyTitle : list[idx];
-
-        // First check in-memory cache (fastest)
-        let url = cacheRef.current[idx];
-
-        // If not in memory, try IndexedDB cache
-        if (!url) {
-          url = await loadFromCache(text);
-          if (url) cacheRef.current[idx] = url; // Store in memory for next time
-        }
-
-        // Play the cached audio (stories MUST be downloaded before playing)
-        if (url && audioRef.current) {
-          try {
-            audioRef.current.src = url;
-            await audioRef.current.play();
-            setIsPlaying(true);
-            return;
-          } catch (e) {
-            console.warn('Audio playback failed:', e);
-          }
-        }
-
-        // No cached audio found - this shouldn't happen for downloaded stories
-        // But just in case, play a ready cue and move on
-        console.warn('No cached audio found for:', text.substring(0, 30));
-        playCue('ready');
-      }, [loadFromCache, playCue, storyTitle]);
-
-      // Audio ended handler
-      const handleAudioEnded = useCallback(() => {
-        setIsPlaying(false);
-
-        // CRITICAL: Revoke blob URL to free memory after playback
-        if (audioRef.current?.src && audioRef.current.src.startsWith('blob:')) {
-          URL.revokeObjectURL(audioRef.current.src);
-        }
-
-        if (currentIndex >= 0 && currentIndex < sentences.length) {
-          playCue('ready');
-          // Audio is already in IndexedDB cache, no need to pre-load
-        }
-      }, [currentIndex, sentences, playCue]);
-
-      // Generic Helpers for Protected Actions
-      const getUnlockDuration = () => ({ hold1: 1000, hold2: 2000, hold3: 3000 }[unlockAction] || 2000);
-
-      const startProtectedAction = (e, setIsHolding, setProgress, setFeedback, timerRef, startTimeRef, onComplete, deferAction = false) => {
-        setIsHolding(true);
-        setFeedback('');
-        if (unlockAction === 'tripleTap') return;
-
-        const duration = getUnlockDuration();
-        e.stopPropagation();
-
-        startTimeRef.current = Date.now();
-        const start = startTimeRef.current;
-        const update = () => {
-          const elapsed = Date.now() - start;
-          const p = Math.min((elapsed / duration) * 100, 100);
-          setProgress(p);
-
-          if (p >= 100) {
-            if (!deferAction) {
-              onComplete();
-            } else {
-              // Deferred: Play cue, stop timer, wait for release
-              if (timerRef.current) {
-                playCue('story_start');
-                cancelAnimationFrame(timerRef.current);
-                timerRef.current = null;
-              }
-            }
-          } else {
-            timerRef.current = requestAnimationFrame(update);
-          }
-        };
-        timerRef.current = requestAnimationFrame(update);
-      };
-
-      const endProtectedAction = (setIsHolding, setProgress, timerRef, startTimeRef, onDeferredComplete) => {
-        if (onDeferredComplete) {
-          const duration = getUnlockDuration();
-          const elapsed = Date.now() - startTimeRef.current;
-          // Check for valid time and prevent double-fire
-          if (startTimeRef.current > 0 && elapsed >= duration) {
-            // Reset start time immediately to prevent second event (mouse/touch overlap)
-            startTimeRef.current = 0;
-            onDeferredComplete();
-            ignoreClickRef.current = true;
-            setTimeout(() => ignoreClickRef.current = false, 50);
-          }
-        }
-        setIsHolding(false);
-        setProgress(0);
-        if (timerRef.current) {
-          cancelAnimationFrame(timerRef.current);
-          timerRef.current = null;
-        }
-      };
-
-      const handleProtectedClick = (setIsHolding, setFeedback, tapRef, onComplete) => {
-        if (ignoreClickRef.current) return;
-
-        setIsHolding(false);
-        if (unlockAction === 'tripleTap') {
-          const now = Date.now();
-          if (now - tapRef.current.lastTime < 600) {
-            tapRef.current.count++;
-          } else {
-            tapRef.current.count = 1;
-          }
-          tapRef.current.lastTime = now;
-
-          if (tapRef.current.count >= 3) {
-            tapRef.current.count = 0;
-            setFeedback('Unlocked!');
-            playCue('story_start');
-            onComplete();
-          } else {
-            setFeedback(`Tap ${3 - tapRef.current.count} more times`);
-            setTimeout(() => setFeedback(''), 1500);
-          }
-        } else {
-          const sec = { hold1: '1', hold2: '2', hold3: '3' }[unlockAction] || '2';
-          setFeedback(`Hold for ${sec}s`);
-          setTimeout(() => setFeedback(''), 2000);
-        }
-      };
-
-      // Exit Button Logic
-      const startHoldExit = (e) => startProtectedAction(e, setIsHoldingExit, setHoldProgress, setExitFeedback, holdTimerRef, holdStartRef, exitStory);
-      const endHoldExit = () => endProtectedAction(setIsHoldingExit, setHoldProgress, holdTimerRef, holdStartRef);
-      const handleExitClick = () => handleProtectedClick(setIsHoldingExit, setExitFeedback, exitTapRef, exitStory);
-
-      // Settings Button Logic
-      const startHoldSettings = (e) => startProtectedAction(e, setIsHoldingSettings, setSettingsHoldProgress, setSettingsFeedback, settingsHoldTimerRef, settingsHoldStartRef, () => setShowSettings(true));
-      const endHoldSettings = () => endProtectedAction(setIsHoldingSettings, setSettingsHoldProgress, settingsHoldTimerRef, settingsHoldStartRef);
-      const handleSettingsClick = () => handleProtectedClick(setIsHoldingSettings, setSettingsFeedback, settingsTapRef, () => setShowSettings(true));
-
-      // Fullscreen Button Logic - Protect ONLY Exit
-      const startHoldFS = (e) => {
-        if (isFullscreenMode) {
-          startProtectedAction(e, setIsHoldingFS, setFsHoldProgress, setFsFeedback, fsHoldTimerRef, fsStartRef, handleFullscreenToggle, true);
-        }
-      };
-
-      const endHoldFS = () => {
-        if (isFullscreenMode) {
-          endProtectedAction(setIsHoldingFS, setFsHoldProgress, fsHoldTimerRef, fsStartRef, handleFullscreenToggle);
-        }
-      };
-
-      const handleFSClick = () => {
-        if (isFullscreenMode) {
-          handleProtectedClick(setIsHoldingFS, setFsFeedback, fsTapRef, handleFullscreenToggle);
-        } else {
-          handleFullscreenToggle();
-        }
-      };
-
-      // Lock button hold timer
-      const startHoldLock = (e) => {
-        if (showEditControls) return;
-        startProtectedAction(e, setIsHoldingLock, setLockHoldProgress, setLockFeedback, lockHoldTimerRef, lockStartRef, () => {
-          setShowEditControls(true);
-          setIsHoldingLock(false);
-          setLockFeedback('');
-          setLockHoldProgress(0);
-        });
-      };
-
-      const endHoldLock = () => {
-        if (showEditControls) return;
-        endProtectedAction(setIsHoldingLock, setLockHoldProgress, lockHoldTimerRef, lockStartRef);
-      };
-
-      const handleLockClick = () => {
-        if (showEditControls) {
-          setShowEditControls(false);
-        } else {
-          handleProtectedClick(setIsHoldingLock, setLockFeedback, lockTapRef, () => {
-            setShowEditControls(true);
-            setIsHoldingLock(false);
-            setLockFeedback('');
-            setLockHoldProgress(0);
-          });
-        }
-      };
-
-      // Main tap handler
-      const handleTap = useCallback(() => {
-        if (isGenerating || isTransitioning) { playCue('busy'); return; }
-
-        if (isPlaying) {
-          if (!allowSkip) { playCue('busy'); return; }
-          // Skip mode: stop current audio and continue to advance
-          if (audioRef.current) {
-            try { audioRef.current.pause(); audioRef.current.currentTime = 0; } catch (e) { }
-          }
-          window.speechSynthesis?.cancel();
-          setIsPlaying(false);
-        }
-
-        // Context-aware tap cue
-        // Cover Page behavior: Tap advances to story (Title reads auto on load)
-        if (currentIndex === -1) {
-          // Auto-fullscreen on start
-          if (!isFullscreenMode) handleFullscreenToggle();
-          playCue('story_start');
-
-          setIsTransitioning(true);
-          setTimeout(() => {
-            setCurrentIndex(0);
-            playSentence(0, sentences);
-            setIsTransitioning(false);
-          }, 300);
-          return;
-        }
-
-        const nextIndex = currentIndex + 1;
-
-        if (currentIndex >= sentences.length) {
-          executeEndAction();
-          return;
-        }
-
-        if (nextIndex >= sentences.length) {
-          playCue('story_end');
-          setTimeout(async () => {
-            setCurrentIndex(sentences.length);
-            setIsTransitioning(false);
-            try {
-              // Load from cache ONLY — "The End." was pre-cached during Download
-              // Never generate on-demand here (would load model and bog down mobile)
-              const url = await loadFromCache("The End.");
-              if (url && audioRef.current) {
-                audioRef.current.src = url;
-                audioRef.current.play();
-              }
-            } catch (e) { /* Audio was pre-cached via Download */ }
-          }, 30);
-          return;
-        }
-
-        playCue('advance');
-        setTimeout(() => {
-          setCurrentIndex(nextIndex);
-          playSentence(nextIndex, sentences);
-          setIsTransitioning(false);
-        }, 80);
-      }, [currentIndex, sentences, isGenerating, isPlaying, isTransitioning, allowSkip, playCue, playSentence, showTitlePage, isFullscreenMode, handleFullscreenToggle, endAction, executeEndAction]);
-
-      // Ultra-responsive touch handler for accessibility
-      // Fires on the SLIGHTEST contact — any finger count, any pressure
-      // Uses touchstart (not click) for zero-delay response
-      const handleInteraction = useCallback((e) => {
-        // Prevent all default browser behaviors (scrolling, zooming, pull-to-refresh, text selection)
-        e.preventDefault();
-
-        // Debounce: touchstart + synthesized mousedown can double-fire
-        const now = Date.now();
-        if (now - lastInteractionRef.current < 180) return;
-        lastInteractionRef.current = now;
-
-        handleTap();
-      }, [handleTap]);
-
-      // Clear in-memory cache when voice settings change
-      // No automatic pre-generation - audio is ONLY cached via Download button or on-demand playback
-      // Speed is locked to NATURAL_SPEED, so no need to clear cache when it changes
-      useEffect(() => {
-        Object.values(cacheRef.current).forEach(url => URL.revokeObjectURL(url));
-        cacheRef.current = {};
-      }, [voice]);
-
-      // Start story (stories MUST be downloaded/cached before playing)
-      const startStory = useCallback(async (textToRead) => {
-        // Clear in-memory cache from previous story to prevent Index-based mix-ups
-        Object.values(cacheRef.current).forEach(url => URL.revokeObjectURL(url));
-        cacheRef.current = {};
-
-        const text = textToRead || rawText;
-        const allSentences = splitIntoSentences(text);
-
-        setSentences(allSentences);
-        const startIndex = showTitlePage ? -1 : 0;
-        setCurrentIndex(startIndex);
-
-        // Stories are pre-cached via Download button, so go directly to reading
-        // No loading screen needed since we're just playing from cache
-        setMode('reading');
-
-        // Start playback after a brief moment for the UI to settle
-        setTimeout(() => playSentence(startIndex, allSentences), 200);
-      }, [rawText, showTitlePage, playSentence]);
-
-      useEffect(() => {
-        if (storyToPlay) {
-          currentStoryIdRef.current = storyToPlay.id; // Remember which story is playing
-          // Ensure we play the text of the SELECTED story, regardless of race conditions with rawText state
-          startStory(storyToPlay.text);
-          setStoryToPlay(null);
-        }
-      }, [storyToPlay]);
-
-      // Exit story
-      const exitStory = useCallback(() => {
-        if (audioRef.current) {
-          try {
-            // Revoke blob URL before clearing
-            if (audioRef.current.src && audioRef.current.src.startsWith('blob:')) {
-              URL.revokeObjectURL(audioRef.current.src);
-            }
-            audioRef.current.pause();
-            audioRef.current.src = '';
-            audioRef.current.load(); // Force unload audio data from memory
-          } catch (e) { }
-        }
-
-        // Clean up all in-memory blob URLs for this story
-        Object.values(cacheRef.current).forEach(url => {
-          if (url && url.startsWith('blob:')) {
-            URL.revokeObjectURL(url);
-          }
-        });
-        cacheRef.current = {};
-
-        window.speechSynthesis?.cancel();
-        setStoryToPlay(null);
-        setMode('library');
-        setCurrentIndex(-1);
-        setIsPlaying(false);
-        setIsGenerating(false);
-      }, []);
-
-      // Consolidated end-of-story logic
-      const executeEndAction = useCallback(() => {
-        if (endAction === 'stop') {
-          playCue('busy');
-          setIsTransitioning(false);
-          return;
-        }
-
-        playCue('tap');
-
-        if (endAction === 'library') {
-          exitStory();
-        } else if (endAction === 'loop') {
-          const startIdx = showTitlePage ? -1 : 0;
-          setCurrentIndex(startIdx);
-          playCue('story_start');
-          setTimeout(() => playSentence(startIdx, sentences), 200);
-          setIsTransitioning(false);
-        } else if (endAction === 'random') {
-          const available = library.filter(s => s.status === 'cached');
-          if (available.length > 0) {
-            const others = available.filter(s => s.id !== currentStoryIdRef.current);
-            const candidates = others.length > 0 ? others : available;
-            const randomStory = candidates[Math.floor(Math.random() * candidates.length)];
-            playCue('story_start');
-            loadBookForPlay(randomStory); // This will transition mode/index via useEffect
-            setIsTransitioning(false);
-          } else {
-            exitStory();
-          }
-        }
-      }, [endAction, library, showTitlePage, sentences, exitStory, playCue, playSentence, loadBookForPlay]);
-
-      // Clear all cached audio from all storage
-      const handleClearCache = async () => {
-        const stats = await getCacheStats();
-        const sizeMB = (stats.totalSize / (1024 * 1024)).toFixed(1);
-
-        if (stats.count === 0) {
-          alert('No cached audio data found.');
-          return;
-        }
-
-        if (!confirm(`This will delete ${stats.count} cached audio files (${sizeMB} MB).\n\nAll stories will need to re-download their audio.\n\nContinue?`)) return;
-
-        await clearAllCachedAudio();
-
-        // Reset all library items to 'ready'
-        setLibrary(prev => prev.map(s => ({ ...s, status: 'ready', progress: 100 })));
-
-        // Clear in-memory cache
-        Object.values(cacheRef.current).forEach(url => URL.revokeObjectURL(url));
-        cacheRef.current = {};
-        processingRef.current = null;
-
-        // Update cache stats display
-        updateCacheStats();
-      };
-
-      // =============================================
-      // SETTINGS MODAL
-      // =============================================
-      const SettingsModal = () => (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/60 backdrop-blur-sm" onClick={() => setShowSettings(false)}>
-          <div className={`${currentTheme.cardBg} rounded-3xl shadow-2xl max-w-lg w-full max-h-[85vh] flex flex-col ${currentTheme.border} border ${theme.includes('high-contrast') ? 'high-contrast' : ''}`} onClick={e => e.stopPropagation()}>
-            <div className={`p-6 border-b ${currentTheme.border} flex items-center justify-between`}>
-              <h2 className={`text-xl font-bold ${currentTheme.textMain}`}>Accessibility Settings</h2>
-              <button onClick={() => setShowSettings(false)} className={`p-2 rounded-full transition-colors ${theme.includes('high-contrast') ? `hover:bg-white/10 ${currentTheme.textMain}` : `hover:bg-slate-100 ${currentTheme.textSub}`}`}>
-                <X size={20} />
-              </button>
+    <canvas id="canvas"></canvas>
+    <!-- Cue Area default: pos-bottom -->
+    <div id="cue-area" class="pulse pos-bottom"></div>
+
+    <div id="settings-btn" role="button" aria-label="Open Settings">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+        <div id="hold-progress"></div>
+    </div>
+    
+    <div id="hold-tooltip">Hold for 2 seconds</div>
+
+    <div id="settings-drawer">
+        <h2 class="text-xl font-bold mb-8 tracking-wide">Parental Settings</h2>
+        
+        <div class="setting-section">
+            <span class="setting-label">Animation Style</span>
+            <div class="pos-grid" id="shape-options" style="grid-template-columns: 1fr 1fr; gap: 12px;">
+                <!-- Shapes added via JS -->
             </div>
-
-            <div className="p-6 space-y-6 overflow-y-auto settings-scroll">
-              {/* Sound Cues */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-indigo-100'}`}>
-                    {soundCuesEnabled ? <Volume2 size={20} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-indigo-600'} /> : <VolumeX size={20} className={currentTheme.textSub} />}
-                  </div>
-                  <div>
-                    <div className={`font-bold ${currentTheme.textMain}`}>Sound Cues</div>
-                    <div className={`text-sm ${currentTheme.textSub}`}>Audio feedback on taps</div>
-                  </div>
-                </div>
-                <button onClick={() => setSoundCuesEnabled(!soundCuesEnabled)} className={`w-14 h-8 rounded-full transition-colors relative border-2 ${soundCuesEnabled ? `bg-${currentTheme.highlight}-500 border-${currentTheme.highlight}-500 ${theme === 'high-contrast-wb' ? 'bg-white border-white' : ''}` : `${theme.includes('high-contrast') ? 'bg-zinc-700 border-zinc-500' : 'bg-slate-600 border-slate-700'}`}`}>
-                  <div className={`absolute top-0.5 w-6 h-6 rounded-full shadow transition-all ${soundCuesEnabled ? 'left-7' : 'left-0.5'} ${theme.includes('high-contrast') ? 'bg-black' : 'bg-white'}`} />
-                </button>
-              </div>
-
-              {/* Vibration */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-purple-100'}`}>
-                    <Vibrate size={20} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-purple-600'} />
-                  </div>
-                  <div>
-                    <div className={`font-bold ${currentTheme.textMain}`}>Vibration</div>
-                    <div className={`text-sm ${currentTheme.textSub}`}>Haptic feedback on taps</div>
-                  </div>
-                </div>
-                <button onClick={() => setVibrationEnabled(!vibrationEnabled)} className={`w-14 h-8 rounded-full transition-colors relative border-2 ${vibrationEnabled ? `bg-${currentTheme.highlight}-500 border-${currentTheme.highlight}-500 ${theme === 'high-contrast-wb' ? 'bg-white border-white' : ''}` : `${theme.includes('high-contrast') ? 'bg-zinc-700 border-zinc-500' : 'bg-slate-600 border-slate-700'}`}`}>
-                  <div className={`absolute top-0.5 w-6 h-6 rounded-full shadow transition-all ${vibrationEnabled ? 'left-7' : 'left-0.5'} ${theme.includes('high-contrast') ? 'bg-black' : 'bg-white'}`} />
-                </button>
-              </div>
-
-              {/* Allow Skip */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-sky-100'}`}>
-                    <SkipForward size={20} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-sky-600'} />
-                  </div>
-                  <div>
-                    <div className={`font-bold ${currentTheme.textMain}`}>Allow Skip</div>
-                    <div className={`text-sm ${currentTheme.textSub}`}>Tap to skip during playback</div>
-                  </div>
-                </div>
-                <button onClick={() => setAllowSkip(!allowSkip)} className={`w-14 h-8 rounded-full transition-colors relative border-2 ${allowSkip ? `bg-${currentTheme.highlight}-500 border-${currentTheme.highlight}-500 ${theme === 'high-contrast-wb' ? 'bg-white border-white' : ''}` : `${theme.includes('high-contrast') ? 'bg-zinc-700 border-zinc-500' : 'bg-slate-600 border-slate-700'}`}`}>
-                  <div className={`absolute top-0.5 w-6 h-6 rounded-full shadow transition-all ${allowSkip ? 'left-7' : 'left-0.5'} ${theme.includes('high-contrast') ? 'bg-black' : 'bg-white'}`} />
-                </button>
-              </div>
-
-              {/* Visual Theme */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-amber-100'}`}>
-                    <Palette size={20} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-amber-600'} />
-                  </div>
-                  <div>
-                    <div className={`font-bold ${currentTheme.textMain}`}>Visual Theme</div>
-                    <div className={`text-sm ${currentTheme.textSub}`}>Reading appearance</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-3 mt-3">
-                  {THEMES.map(t => (
-                    <button key={t.id} onClick={() => setTheme(t.id)} className={`relative overflow-hidden p-1 rounded-xl border-2 transition-all group ${theme === t.id ? `${currentTheme.highlightBorder} ring-2 ${currentTheme.highlightRing}` : `${theme.includes('high-contrast') ? 'border-zinc-700 hover:border-zinc-500' : 'border-slate-200 hover:border-indigo-200'}`}`}>
-                      <div className={`w-full aspect-[16/10] rounded-lg ${t.bg} flex flex-col items-center justify-center relative overflow-hidden`}>
-                        {/* Mini text preview */}
-                        <div className={`text-xs font-serif font-medium ${t.text} opacity-90 mb-1`}>Fairy Tale</div>
-                        <div className={`w-12 h-0.5 rounded-full ${t.text} opacity-20`} />
-
-                        {/* Mini progress bar */}
-                        <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/10">
-                          <div className={`h-full w-2/3 ${t.progress}`} />
-                        </div>
-                      </div>
-
-                      <div className={`p-2 text-center ${currentTheme.cardBg}`}>
-                        <div className={`font-bold text-xs ${currentTheme.textMain}`}>{t.label}</div>
-                      </div>
-
-                      {/* Selection check */}
-                      {theme === t.id && (
-                        <div className={`absolute top-2 right-2 w-5 h-5 rounded-full flex items-center justify-center shadow-sm z-10 ${theme.includes('high-contrast') ? `${currentTheme.border} border-2 ${currentTheme.textMain}` : 'bg-indigo-500 text-white'}`}>
-                          <Check size={12} className={theme.includes('high-contrast') ? '' : 'text-white'} strokeWidth={3} />
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Text Size */}
-              <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-emerald-100'}`}>
-                    <Eye size={20} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-emerald-600'} />
-                  </div>
-                  <div>
-                    <div className={`font-bold ${currentTheme.textMain}`}>Text Size</div>
-                    <div className={`text-sm ${currentTheme.textSub}`}>Story text size</div>
-                  </div>
-                </div>
-                <div className="flex gap-2 mt-3">
-                  {[{ id: 'normal', label: 'Normal' }, { id: 'large', label: 'Large' }, { id: 'huge', label: 'Huge' }].map(s => (
-                    <button key={s.id} onClick={() => setTextSize(s.id)} className={`flex-1 p-3 rounded-xl border-2 text-center transition-all ${textSize === s.id ? `${currentTheme.highlightBorder} ${currentTheme.highlightBgLight}` : `${currentTheme.border} ${theme.includes('high-contrast') ? '' : 'hover:bg-slate-50'}`} ${currentTheme.cardBg}`}>
-                      <div className={`font-bold mb-1 ${s.id === 'huge' ? 'text-2xl' : s.id === 'large' ? 'text-xl' : 'text-base'} ${currentTheme.textMain}`}>Aa</div>
-                      <div className={`text-xs ${currentTheme.textSub}`}>{s.label}</div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-
-
-              {/* Screen Boundary */}
-              <div className={`space-y-3 pt-4 border-t ${currentTheme.border}`}>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-orange-100'}`}>
-                      <Layout size={20} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-orange-600'} />
-                    </div>
-                    <div>
-                      <div className={`font-bold ${currentTheme.textMain}`}>Show Screen Boundary</div>
-                      <div className={`text-sm ${currentTheme.textSub}`}>High contrast edge outline</div>
-                    </div>
-                  </div>
-                  <button onClick={() => setShowBoundary(!showBoundary)} className={`w-14 h-8 rounded-full transition-colors relative border-2 ${showBoundary ? `bg-${currentTheme.highlight}-500 border-${currentTheme.highlight}-500 ${theme === 'high-contrast-wb' ? 'bg-white border-white' : ''}` : `${theme.includes('high-contrast') ? 'bg-zinc-700 border-zinc-500' : 'bg-slate-600 border-slate-700'}`}`}>
-                    <div className={`absolute top-0.5 w-6 h-6 rounded-full shadow transition-all ${showBoundary ? 'left-7' : 'left-0.5'} ${theme.includes('high-contrast') ? 'bg-black' : 'bg-white'}`} />
-                  </button>
-                </div>
-
-                <div className={`pt-4 border-t ${currentTheme.border} mt-4`}>
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-slate-100'}`}>
-                      <PenTool size={16} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-slate-600'} />
-                    </div>
-                    <span className={`text-xs font-bold uppercase tracking-wider ${currentTheme.textSub}`}>Highlight Color (Boundary & Progress)</span>
-                  </div>
-
-                  <div className="grid grid-cols-6 gap-2">
-                    {[{ id: 'yellow', hex: '#facc15', label: 'Yellow' }, { id: 'red', hex: '#ef4444', label: 'Red' }, { id: 'green', hex: '#10b981', label: 'Green' }, { id: 'orange', hex: '#f97316', label: 'Orange' }, { id: 'purple', hex: '#a855f7', label: 'Purple' }, { id: 'blue', hex: '#3b82f6', label: 'Blue' }].map(c => (
-                      <button
-                        key={c.id}
-                        onClick={() => setBoundaryColor(c.id)}
-                        className={`w-10 h-10 rounded-full transition-transform shadow-sm ${boundaryColor === c.id ? `ring-4 ring-offset-2 ${currentTheme.highlightRing} scale-110 ${theme.includes('high-contrast') ? 'ring-offset-zinc-900' : ''}` : `hover:scale-105 border-2 opacity-80 hover:opacity-100 ${theme.includes('high-contrast') ? 'border-zinc-600' : 'border-slate-200'}`}`}
-                        style={{ backgroundColor: c.hex }}
-                        title={c.label}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              {/* STORY OPTIONS */}
-              <div className={`space-y-3 pt-4 border-t ${currentTheme.border}`}>
-                <h3 className={`text-xs font-bold uppercase tracking-wider ${currentTheme.textSub}`}>Story Options</h3>
-
-                {/* Show Title Page */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-teal-100'}`}>
-                      <Type size={20} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-teal-600'} />
-                    </div>
-                    <div>
-                      <div className={`font-bold ${currentTheme.textMain}`}>Show Title Page</div>
-                      <div className={`text-sm ${currentTheme.textSub}`}>Read title before story</div>
-                    </div>
-                  </div>
-                  <button onClick={() => setShowTitlePage(!showTitlePage)} className={`w-14 h-8 rounded-full transition-colors relative border-2 ${showTitlePage ? `bg-${currentTheme.highlight}-500 border-${currentTheme.highlight}-500 ${theme === 'high-contrast-wb' ? 'bg-white border-white' : ''}` : `${theme.includes('high-contrast') ? 'bg-zinc-700 border-zinc-500' : 'bg-slate-600 border-slate-700'}`}`}>
-                    <div className={`absolute top-0.5 w-6 h-6 rounded-full shadow transition-all ${showTitlePage ? 'left-7' : 'left-0.5'} ${theme.includes('high-contrast') ? 'bg-black' : 'bg-white'}`} />
-                  </button>
-                </div>
-
-                {/* End Action */}
-                <div className={`space-y-3 pt-4 border-t ${currentTheme.border}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-blue-100'}`}>
-                      <Check size={20} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-blue-600'} />
-                    </div>
-                    <div>
-                      <div className={`font-bold ${currentTheme.textMain}`}>End of Story Action</div>
-                      <div className={`text-sm ${currentTheme.textSub}`}>What happens when a story finishes</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {[
-                      { id: 'stop', label: 'Stop', desc: 'Stay on End Screen' },
-                      { id: 'library', label: 'Library', desc: 'Return to list' },
-                      { id: 'loop', label: 'Loop', desc: 'Show Replay button' },
-                      { id: 'random', label: 'Random', desc: 'Play random story' }
-                    ].map(opt => (
-                      <button key={opt.id} onClick={() => setEndAction(opt.id)} className={`px-3 py-3 rounded-xl border-2 text-left transition-all ${endAction === opt.id ? `${currentTheme.highlightBorder} ${currentTheme.highlightBgLight} ${currentTheme.textMain} shadow-sm` : `${currentTheme.border} ${currentTheme.textSub} opacity-70`}`}>
-                        <div className="font-bold text-sm">{opt.label}</div>
-                        <div className="text-[10px] opacity-70">{opt.desc}</div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Lock Button Action */}
-                <div className={`space-y-3 pt-4 border-t ${currentTheme.border}`}>
-                  <div className="flex items-center gap-3">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-red-100'}`}>
-                      <Lock size={20} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-red-600'} />
-                    </div>
-                    <div>
-                      <div className={`font-bold ${currentTheme.textMain}`}>Unlock Method</div>
-                      <div className={`text-sm ${currentTheme.textSub}`}>How parents unlock the app</div>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 mt-2">
-                    {[
-                      { id: 'hold1', label: 'Hold 1s' },
-                      { id: 'hold2', label: 'Hold 2s' },
-                      { id: 'hold3', label: 'Hold 3s' },
-                      { id: 'tripleTap', label: '3x Tap' }
-                    ].map(opt => (
-                      <button key={opt.id} onClick={() => setUnlockAction(opt.id)} className={`px-4 py-3 rounded-xl border-2 font-bold text-sm transition-all ${unlockAction === opt.id ? `${currentTheme.highlightBorder} ${currentTheme.highlightBgLight} ${currentTheme.textMain} shadow-sm` : `${currentTheme.border} ${currentTheme.textSub} opacity-70`}`}>
-                        {opt.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-            </div>
-
-            <div className={`p-6 border-t ${currentTheme.border}`}>
-              <button onClick={() => setShowSettings(false)} className={`w-full py-3 font-bold rounded-xl transition-colors ${theme === 'high-contrast-yb' ? 'bg-yellow-400 text-black hover:bg-yellow-300' : theme === 'high-contrast-wb' ? 'bg-white text-black hover:bg-slate-200' : `bg-${currentTheme.highlight}-500 text-white hover:bg-${currentTheme.highlight}-600`}`}>Done</button>
-            </div>
-          </div>
         </div>
-      );
 
-      // BOUNDARY OVERLAY (High Visibility)
-      const renderBoundary = () => {
-        if (!showBoundary) return null;
-        const colors = {
-          yellow: 'border-yellow-400',
-          red: 'border-red-500',
-          green: 'border-emerald-500',
-          orange: 'border-orange-500',
-          purple: 'border-purple-500',
-          blue: 'border-blue-500'
-        };
-        return (
-          <div className={`fixed inset-0 border-[12px] ${colors[boundaryColor] || 'border-yellow-400'} pointer-events-none z-[9999]`} style={{ boxShadow: 'inset 0 0 20px rgba(0,0,0,0.2)' }} />
-        );
-      };
-
-      // =============================================
-      // LOADING SCREEN
-      // =============================================
-      if (mode === 'loading') {
-        return (
-          <div className={`fixed inset-0 flex flex-col items-center justify-center p-8 ${theme.includes('high-contrast') ? currentTheme.pageBg : 'bg-slate-900'}`}>
-            <div className="relative mb-8">
-              <div className={`w-24 h-24 rounded-3xl flex items-center justify-center shadow-2xl ${theme.includes('high-contrast') ? `border-2 ${currentTheme.border}` : 'bg-indigo-600 shadow-indigo-500/30'}`}>
-                <Wand2 size={40} className={`animate-pulse ${theme.includes('high-contrast') ? currentTheme.textMain : 'text-white'}`} />
-              </div>
+        <div class="setting-section">
+            <span class="setting-label">Color Theme</span>
+            <div id="range-options">
+                <!-- Ranges added via JS -->
             </div>
-            <h2 className={`text-2xl font-extrabold mb-2 ${theme.includes('high-contrast') ? currentTheme.textMain : 'text-white'}`}>Preparing Magic Voice</h2>
-            <p className={`text-sm mb-6 ${theme.includes('high-contrast') ? `${currentTheme.textSub}` : 'text-indigo-300'}`}>{modelStatus || 'This only happens once...'}</p>
-            <div className={`w-64 h-2 rounded-full overflow-hidden ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-slate-800'}`}>
-              <div className={`h-full transition-all duration-300 rounded-full ${theme.includes('high-contrast') ? currentTheme.progress : 'bg-indigo-500'}`} style={{ width: `${modelProgress}%` }} />
+        </div>
+
+        <div class="setting-section">
+            <span class="setting-label">Interface Settings</span>
+            
+            <div id="fullscreen-options" style="margin-bottom: 15px;">
+                <!-- Fullscreen toggle added via JS -->
             </div>
-            <p className={`mt-3 font-bold ${theme.includes('high-contrast') ? currentTheme.textMain : 'text-indigo-400'}`}>{modelProgress}%</p>
+            
+            <div style="margin-bottom: 15px;">
+                <span class="setting-label">Button Color</span>
+                <div class="color-grid" id="switch-color-options">
+                    <!-- Colors added via JS -->
+                </div>
+            </div>
+            
+            <div id="visibility-options">
+                <!-- Toggle added via JS -->
+            </div>
+            
+            <div style="margin-top: 15px;">
+                <span class="setting-label">Touch Target</span>
+                <div class="pos-grid" id="interaction-options">
+                    <!-- Added via JS -->
+                </div>
+            </div>
 
-            {loadError && (
-              <div className={`mt-6 p-4 rounded-xl max-w-md text-center ${theme.includes('high-contrast') ? `border ${currentTheme.border} ${currentTheme.textMain}` : 'bg-amber-900/50 text-amber-200'}`}>
-                <AlertTriangle className="mx-auto mb-2" size={24} />
-                <p className="text-sm">{loadError}</p>
-                <p className="text-xs mt-2 opacity-75">Switching to backup voice...</p>
-              </div>
-            )}
-          </div>
-        );
-      }
+            <div style="margin-top: 15px;">
+                <span class="setting-label">Tap Cooldown</span>
+                <div class="pos-grid" id="cooldown-options">
+                    <!-- Added via JS -->
+                </div>
+            </div>
 
-      // =============================================
-      // LIBRARY SCREEN (Main Landing)
-      // =============================================
-      if (mode === 'library') {
-        const renderStoryCard = (story) => {
-          const colors = {
-            indigo: 'bg-indigo-500',
-            emerald: 'bg-emerald-500',
-            amber: 'bg-amber-500',
-            rose: 'bg-rose-500',
-            purple: 'bg-purple-500',
-            cyan: 'bg-cyan-500'
-          };
-          const headerColor = colors[story.color] || colors.indigo;
+            <div style="margin-top: 15px;">
+                <span class="setting-label">Button Position</span>
+                <div class="pos-grid" id="position-options">
+                    <!-- Position buttons added via JS -->
+                </div>
+            </div>
 
-          const isProcessing = story.status === 'processing';
-          const isCached = story.status === 'cached';
+            <div style="margin-top: 15px;">
+                <span class="setting-label">Button Size</span>
+                <div class="slider-container">
+                    <div class="slider-header">
+                        <span>Scale</span>
+                        <span class="slider-value" id="button-scale-value">100%</span>
+                    </div>
+                    <input type="range" id="button-scale-slider" min="50" max="250" step="10" value="150">
+                </div>
+            </div>
+        </div>
 
-          // Smart click handler: Play if cached, Download if not (and unlocked)
-          const handleCardClick = (e) => {
-            if (showEditControls && !isCached && !isProcessing) {
-              preloadBook(story, e);
-            } else {
-              loadBookForPlay(story);
+        <div id="close-drawer">Close</div>
+        <p class="mt-6 text-xs opacity-30 text-center uppercase tracking-widest">By Niall Brown Early Childhood Vision consultant (ECVC)</p>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const cueArea = document.getElementById('cue-area');
+        const settingsBtn = document.getElementById('settings-btn');
+        const settingsDrawer = document.getElementById('settings-drawer');
+        const closeDrawer = document.getElementById('close-drawer');
+        const holdTooltip = document.getElementById('hold-tooltip');
+
+        let width, height;
+        let elements = [];
+        let time = 0;
+
+        // --- Settings State ---
+        let currentHue = 240;
+        const hueShiftPerTouch = 15;
+        let activeHueRange = [0, 360]; 
+        let isSwitchEnabled = true;
+        let currentPosition = 'pos-bottom'; 
+        let tapMode = 'anywhere'; // 'anywhere' or 'button'
+        let cooldownMode = 'animation'; // 'animation', '8s', '10s'
+        let isCooldown = false;
+        let cooldownTimer = null;
+        let buttonRestoreTimer = null;
+        
+        // Animation customization
+        let animationShape = 'waves'; // 'waves', 'bubbles'
+        let buttonScale = 1.5; // Button size scale (0.5 = min, 1.5 = default, up to 2.5)
+        let isFullscreen = false; // Track fullscreen state
+
+        // Load saved preferences
+        function loadPreferences() {
+            const saved = localStorage.getItem('sensoryTapPrefs');
+            if (saved) {
+                try {
+                    const prefs = JSON.parse(saved);
+                    if (prefs.isSwitchEnabled !== undefined) isSwitchEnabled = prefs.isSwitchEnabled;
+                    if (prefs.currentPosition) currentPosition = prefs.currentPosition;
+                    if (prefs.tapMode) tapMode = prefs.tapMode;
+                    if (prefs.cooldownMode) cooldownMode = prefs.cooldownMode;
+                    if (prefs.activeSwitchColorIndex !== undefined) activeSwitchColorIndex = prefs.activeSwitchColorIndex;
+                    if (prefs.activeHueRange) activeHueRange = prefs.activeHueRange;
+                    if (prefs.currentHue !== undefined) currentHue = prefs.currentHue;
+                    if (prefs.animationShape) animationShape = prefs.animationShape;
+                    if (prefs.buttonScale !== undefined) buttonScale = prefs.buttonScale;
+                } catch (e) {
+                    console.error('Failed to load preferences:', e);
+                }
             }
-          };
+        }
 
-          return (
-            <div key={story.id}
-              onClick={handleCardClick}
-              className={`aspect-[3/4] relative rounded-3xl overflow-hidden shadow-xl transition-all group flex flex-col border-4 border-slate-900 ${currentTheme.cardBg} ${isCached ? 'cursor-pointer hover:scale-[1.02] hover:shadow-2xl' : 'cursor-default opacity-90 grayscale-[0.3]'}`}
-            >
-              {/* Colored Header: Title */}
-              <div className={`flex-1 p-6 flex items-center justify-center text-center relative ${headerColor}`}>
-                <h3 className="text-3xl font-extrabold leading-tight text-white drop-shadow-md line-clamp-4">{story.title}</h3>
-              </div>
+        // Save preferences
+        function savePreferences() {
+            const prefs = {
+                isSwitchEnabled,
+                currentPosition,
+                tapMode,
+                cooldownMode,
+                activeSwitchColorIndex,
+                activeHueRange,
+                currentHue,
+                animationShape,
+                buttonScale
+            };
+            localStorage.setItem('sensoryTapPrefs', JSON.stringify(prefs));
+        }
 
-              {/* Dark Footer: Status & Actions */}
-              <div className="h-24 bg-slate-900 flex items-center justify-between px-6 text-white relative border-t-4 border-slate-900">
+        const hueRanges = [
+            { label: "Red - Orange - Yellow", range: [0, 60] },
+            { label: "Yellow - Green - Lime", range: [60, 140] },
+            { label: "Green - Teal - Blue", range: [120, 240] },
+            { label: "Blue - Purple - Red", range: [220, 360] },
+            { label: "Full Spectrum", range: [0, 360] }
+        ];
 
-                {/* Left: Status Icon / Main Action */}
-                <div className="flex items-center gap-3">
-                  {isProcessing ? (
-                    <div className="flex items-center gap-3">
-                      <div className="flex flex-col text-white">
-                        <span className="font-black text-xl">{story.progress}%</span>
-                        <span className="text-xs font-bold opacity-80 uppercase tracking-widest">Loading</span>
-                      </div>
-                      <button
-                        onClick={(e) => cancelDownload(story.id, e)}
-                        className="p-3 rounded-2xl bg-rose-500/30 hover:bg-rose-500/50 text-rose-300 transition-all active:scale-95 border border-rose-500/20"
-                        title="Cancel download"
-                      >
-                        <X size={22} />
-                      </button>
-                    </div>
-                  ) : isCached ? (
-                    <div className="flex items-center gap-3" style={{ color: { yellow: '#facc15', red: '#ef4444', green: '#10b981', orange: '#f97316', purple: '#a855f7', blue: '#3b82f6' }[boundaryColor] || '#facc15' }}>
-                      <div className={`p-3 rounded-2xl bg-white/10`}>
-                        <Play size={32} fill="currentColor" />
-                      </div>
-                      <span className={`font-bold text-lg hidden sm:block`}>Read</span>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 opacity-90 text-white">
-                      <Download size={24} className="shrink-0" />
-                      <span className="font-bold text-base sm:text-lg leading-tight">Process & Add This Story</span>
-                    </div>
-                  )}
-                </div>
+        const switchColors = [
+            { main: '#ef4444', dark: '#7f1d1d', shadow: 'rgba(239, 68, 68, 0.4)' }, // Red
+            { main: '#22c55e', dark: '#14532d', shadow: 'rgba(34, 197, 94, 0.4)' }, // Green
+            { main: '#3b82f6', dark: '#1e3a8a', shadow: 'rgba(59, 130, 246, 0.4)' }, // Blue
+            { main: '#eab308', dark: '#713f12', shadow: 'rgba(234, 179, 8, 0.4)' }, // Yellow
+            { main: '#a855f7', dark: '#581c87', shadow: 'rgba(168, 85, 247, 0.4)' }, // Purple
+            { main: '#f97316', dark: '#7c2d12', shadow: 'rgba(249, 115, 22, 0.4)' }, // Orange
+            { main: '#ffffff', dark: '#525252', shadow: 'rgba(255, 255, 255, 0.3)' }  // White
+        ];
 
-                {/* Right: Edit Controls (Only if unlocked) */}
-                {showEditControls && (
-                  <div className="flex items-center gap-2">
-                    {/* Edit Button */}
-                    <button onClick={(e) => editBook(story, e)} className="p-3 bg-white/10 rounded-2xl hover:bg-white/20 text-white transition-all active:scale-95 shadow-lg border border-white/10">
-                      <Pencil size={22} />
-                    </button>
+        let activeSwitchColorIndex = 0;
 
-                    {/* Delete Button */}
-                    <button onClick={(e) => deleteBook(story, e)} className="p-3 bg-rose-500/20 rounded-2xl hover:bg-rose-600/40 text-rose-400 transition-all active:scale-95 shadow-lg border border-rose-500/20">
-                      <Trash2 size={22} />
-                    </button>
-                  </div>
-                )}
-              </div>
+        // --- Initialize UI ---
+        function setupSettingsUI() {
+            // Apply saved position classes
+            cueArea.className = `pulse ${currentPosition}`;
+            
+            // Apply saved switch color
+            updateSwitchColor();
+            
+            // Apply saved button visibility
+            cueArea.style.display = isSwitchEnabled ? 'flex' : 'none';
+            
+            // Setup Visibility Toggle
+            const visibilityContainer = document.getElementById('visibility-options');
+            const toggleBtn = document.createElement('div');
+            toggleBtn.className = `toggle-btn ${isSwitchEnabled ? 'active' : ''}`;
+            toggleBtn.innerHTML = `<span>Big Target Button</span><span class="toggle-status">${isSwitchEnabled ? 'ON' : 'OFF'}</span>`;
+            toggleBtn.onclick = () => {
+                isSwitchEnabled = !isSwitchEnabled;
+                toggleBtn.classList.toggle('active', isSwitchEnabled);
+                const statusSpan = toggleBtn.querySelector('.toggle-status');
+                statusSpan.textContent = isSwitchEnabled ? 'ON' : 'OFF';
+                cueArea.style.display = isSwitchEnabled ? 'flex' : 'none';
+                savePreferences();
+            };
+            visibilityContainer.appendChild(toggleBtn);
 
-              {/* Progress Bar Overlay (Bottom edge) */}
-              {isProcessing && (
-                <div className="absolute bottom-0 left-0 h-2 bg-slate-800 w-full">
-                  <div className="h-full transition-all duration-300 bg-indigo-500" style={{ width: `${story.progress}%` }} />
-                </div>
-              )}
-            </div>
-          );
+            // Setup Fullscreen Toggle
+            const fullscreenContainer = document.getElementById('fullscreen-options');
+            const fullscreenBtn = document.createElement('div');
+            fullscreenBtn.className = `toggle-btn ${isFullscreen ? 'active' : ''}`;
+            fullscreenBtn.innerHTML = `<span>Fullscreen Mode</span><span class="toggle-status">${isFullscreen ? 'ON' : 'OFF'}</span>`;
+            fullscreenBtn.onclick = () => {
+                toggleFullscreen();
+            };
+            fullscreenContainer.appendChild(fullscreenBtn);
+
+            // Setup Interaction Mode Options
+            const interactionContainer = document.getElementById('interaction-options');
+            const interactionModes = [
+                { id: 'anywhere', label: 'Anywhere' },
+                { id: 'button', label: 'Button Only' }
+            ];
+            
+            interactionModes.forEach(mode => {
+                const btn = document.createElement('div');
+                btn.className = `pos-btn ${mode.id === tapMode ? 'active' : ''}`;
+                btn.textContent = mode.label;
+                btn.onclick = () => {
+                    tapMode = mode.id;
+                    document.querySelectorAll('#interaction-options .pos-btn').forEach(el => {
+                        el.classList.toggle('active', el.textContent === mode.label);
+                    });
+                    savePreferences();
+                };
+                interactionContainer.appendChild(btn);
+            });
+
+            // Setup Cooldown Options
+            const cooldownContainer = document.getElementById('cooldown-options');
+            const cooldownModes = [
+                { id: 'animation', label: 'End of Animation' },
+                { id: '8s', label: '8 Sec' },
+                { id: '10s', label: '10 Sec' }
+            ];
+            
+            cooldownModes.forEach(mode => {
+                const btn = document.createElement('div');
+                btn.className = `pos-btn ${mode.id === cooldownMode ? 'active' : ''}`;
+                btn.textContent = mode.label;
+                btn.onclick = () => {
+                    cooldownMode = mode.id;
+                    document.querySelectorAll('#cooldown-options .pos-btn').forEach(el => {
+                        el.classList.toggle('active', el.textContent === mode.label);
+                    });
+                    savePreferences();
+                };
+                cooldownContainer.appendChild(btn);
+            });
+
+            // Setup Position Options
+            const posContainer = document.getElementById('position-options');
+            const positions = [
+                { id: 'pos-top', label: 'Top' },
+                { id: 'pos-bottom', label: 'Bottom' },
+                { id: 'pos-left', label: 'Left' },
+                { id: 'pos-right', label: 'Right' },
+                { id: 'pos-center', label: 'Center' }
+            ];
+            
+            positions.forEach(pos => {
+                const btn = document.createElement('div');
+                // Make center span full width or just list them
+                btn.className = `pos-btn ${pos.id === currentPosition ? 'active' : ''}`;
+                if (pos.id === 'pos-center') btn.style.gridColumn = 'span 2'; // make center slightly wider or prominent
+                btn.textContent = pos.label;
+                btn.onclick = () => {
+                    // Remove old class
+                    cueArea.classList.remove(currentPosition);
+                    
+                    // Update state
+                    currentPosition = pos.id;
+                    
+                    // Add new class
+                    cueArea.classList.add(currentPosition);
+
+                    // Update button size for new position
+                    updateButtonSize();
+
+                    // Update UI buttons
+                    document.querySelectorAll('#position-options .pos-btn').forEach(el => {
+                        el.classList.toggle('active', el.textContent === pos.label);
+                    });
+                    
+                    savePreferences();
+                };
+                posContainer.appendChild(btn);
+            });
+
+
+            // Setup Color Options
+            const colorContainer = document.getElementById('switch-color-options');
+            switchColors.forEach((color, idx) => {
+                const opt = document.createElement('div');
+                opt.className = `color-opt ${idx === activeSwitchColorIndex ? 'active' : ''}`;
+                opt.style.backgroundColor = color.main;
+                opt.onclick = () => {
+                    activeSwitchColorIndex = idx;
+                    updateSwitchColor();
+                    document.querySelectorAll('.color-opt').forEach((el, i) => {
+                        el.classList.toggle('active', i === idx);
+                    });
+                    savePreferences();
+                };
+                colorContainer.appendChild(opt);
+            });
+
+            // Setup Range Options
+            const rangeContainer = document.getElementById('range-options');
+            hueRanges.forEach((r, idx) => {
+                const btn = document.createElement('div');
+                const isActive = JSON.stringify(r.range) === JSON.stringify(activeHueRange);
+                btn.className = `range-btn ${isActive ? 'active' : ''}`;
+                
+                const label = document.createElement('span');
+                label.className = 'range-name';
+                label.textContent = r.label;
+                btn.appendChild(label);
+
+                const preview = document.createElement('div');
+                preview.className = 'range-preview';
+                
+                const [min, max] = r.range;
+                if (min === 0 && max === 360) {
+                     preview.style.background = 'linear-gradient(to right, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000)';
+                } else {
+                     preview.style.background = `linear-gradient(to right, hsl(${min}, 85%, 50%), hsl(${max}, 85%, 50%))`;
+                }
+                btn.appendChild(preview);
+
+                btn.onclick = () => {
+                    activeHueRange = r.range;
+                    currentHue = r.range[0]; 
+                    document.querySelectorAll('.range-btn').forEach((el, i) => {
+                        el.classList.toggle('active', i === idx);
+                    });
+                    savePreferences();
+                };
+                rangeContainer.appendChild(btn);
+            });
+
+            // Setup Shape Options
+            const shapeContainer = document.getElementById('shape-options');
+            const shapes = [
+                { id: 'waves', label: 'Waves' },
+                { id: 'bubbles', label: 'Bubbles' }
+            ];
+            
+            shapes.forEach(shape => {
+                const btn = document.createElement('div');
+                btn.className = `pos-btn ${shape.id === animationShape ? 'active' : ''}`;
+                btn.textContent = shape.label;
+                btn.onclick = () => {
+                    animationShape = shape.id;
+                    document.querySelectorAll('#shape-options .pos-btn').forEach(el => {
+                        el.classList.toggle('active', el.textContent === shape.label);
+                    });
+                    savePreferences();
+                };
+                shapeContainer.appendChild(btn);
+            });
+
+            // Setup Button Size Slider
+            const sizeSlider = document.getElementById('button-scale-slider');
+            const sizeValue = document.getElementById('button-scale-value');
+            
+            // Set initial value
+            sizeSlider.value = buttonScale * 100;
+            sizeValue.textContent = `${Math.round(buttonScale * 100)}%`;
+            
+            // Handle slider changes
+            sizeSlider.addEventListener('input', (e) => {
+                buttonScale = e.target.value / 100;
+                sizeValue.textContent = `${Math.round(buttonScale * 100)}%`;
+                updateButtonSize();
+                savePreferences();
+            });
+            
+            // Apply initial button size
+            updateButtonSize();
+        }
+
+        function updateButtonSize() {
+            // Apply scale to button dimensions based on position
+            const baseWidth = 360;
+            const baseHeight = 130;
+            const baseCenterSize = 240;
+            
+            const scaledWidth = baseWidth * buttonScale;
+            const scaledHeight = baseHeight * buttonScale;
+            const scaledCenterSize = baseCenterSize * buttonScale;
+            
+            // Update CSS custom properties for dynamic sizing
+            cueArea.style.setProperty('--button-scale', buttonScale);
+            
+            // Apply sizes based on current position
+            if (currentPosition === 'pos-bottom' || currentPosition === 'pos-top') {
+                cueArea.style.width = `${scaledWidth}px`;
+                cueArea.style.height = `${scaledHeight}px`;
+                cueArea.style.borderRadius = currentPosition === 'pos-bottom' ? 
+                    `${scaledWidth/2}px ${scaledWidth/2}px 0 0` : 
+                    `0 0 ${scaledWidth/2}px ${scaledWidth/2}px`;
+            } else if (currentPosition === 'pos-left' || currentPosition === 'pos-right') {
+                cueArea.style.width = `${scaledHeight}px`;
+                cueArea.style.height = `${scaledWidth}px`;
+                cueArea.style.borderRadius = currentPosition === 'pos-right' ? 
+                    `${scaledWidth/2}px 0 0 ${scaledWidth/2}px` : 
+                    `0 ${scaledWidth/2}px ${scaledWidth/2}px 0`;
+            } else if (currentPosition === 'pos-center') {
+                cueArea.style.width = `${scaledCenterSize}px`;
+                cueArea.style.height = `${scaledCenterSize}px`;
+                cueArea.style.borderRadius = '50%';
+            }
+        }
+
+        function updateSwitchColor() {
+            const color = switchColors[activeSwitchColorIndex];
+            document.documentElement.style.setProperty('--switch-color-main', color.main);
+            document.documentElement.style.setProperty('--switch-color-dark', color.dark);
+            document.documentElement.style.setProperty('--switch-shadow', color.shadow);
+        }
+
+        // --- Fullscreen Logic ---
+        function toggleFullscreen() {
+            if (!document.fullscreenElement && 
+                !document.webkitFullscreenElement && 
+                !document.mozFullScreenElement && 
+                !document.msFullscreenElement) {
+                // Enter fullscreen
+                const elem = document.documentElement;
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { // Safari
+                    elem.webkitRequestFullscreen();
+                } else if (elem.mozRequestFullScreen) { // Firefox
+                    elem.mozRequestFullScreen();
+                } else if (elem.msRequestFullscreen) { // IE/Edge
+                    elem.msRequestFullscreen();
+                }
+            } else {
+                // Exit fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            }
+        }
+
+        function updateFullscreenButton() {
+            isFullscreen = !!(document.fullscreenElement || 
+                            document.webkitFullscreenElement || 
+                            document.mozFullScreenElement || 
+                            document.msFullscreenElement);
+            
+            const fullscreenBtn = document.querySelector('#fullscreen-options .toggle-btn');
+            if (fullscreenBtn) {
+                fullscreenBtn.classList.toggle('active', isFullscreen);
+                const statusSpan = fullscreenBtn.querySelector('.toggle-status');
+                if (statusSpan) {
+                    statusSpan.textContent = isFullscreen ? 'ON' : 'OFF';
+                }
+            }
+        }
+
+        // Listen for fullscreen changes
+        document.addEventListener('fullscreenchange', updateFullscreenButton);
+        document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+        document.addEventListener('mozfullscreenchange', updateFullscreenButton);
+        document.addEventListener('MSFullscreenChange', updateFullscreenButton);
+
+        // --- Hold-to-Open Settings Logic ---
+        let holdTimer;
+        let tooltipTimer;
+        
+        function startHold() {
+            settingsBtn.classList.add('holding');
+            
+            // Show tooltip after a brief delay
+            tooltipTimer = setTimeout(() => {
+                holdTooltip.classList.add('show');
+            }, 100);
+            
+            holdTimer = setTimeout(() => {
+                settingsDrawer.classList.add('open');
+                settingsBtn.classList.remove('holding');
+                holdTooltip.classList.remove('show');
+            }, 2000);
+        }
+
+        function endHold() {
+            clearTimeout(holdTimer);
+            clearTimeout(tooltipTimer);
+            settingsBtn.classList.remove('holding');
+            holdTooltip.classList.remove('show');
+        }
+
+        settingsBtn.addEventListener('mousedown', startHold);
+        settingsBtn.addEventListener('touchstart', (e) => { e.preventDefault(); startHold(); });
+        window.addEventListener('mouseup', endHold);
+        window.addEventListener('touchend', endHold);
+
+        closeDrawer.onclick = () => settingsDrawer.classList.remove('open');
+
+        // --- Animation Logic ---
+
+        function init() {
+            loadPreferences();
+            resize();
+            setupSettingsUI();
+            animate();
+        }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+
+        window.addEventListener('resize', resize);
+
+        class Bubble {
+            constructor(x, y, hue, delay) {
+                this.startX = x;
+                this.startY = height + 50; // Start just below screen for smooth entry
+                this.x = this.startX;
+                this.y = this.startY;
+                this.hue = hue;
+                this.delay = delay;
+                this.radius = 25 + Math.random() * 50; // Slightly larger minimum
+                this.opacity = 0.7 + Math.random() * 0.2;
+                this.speed = 1.2 + Math.random() * 1.5; // More consistent speed
+                this.wobbleAmount = 20 + Math.random() * 40; // Gentler wobble
+                this.wobbleSpeed = 0.015 + Math.random() * 0.02; // Smoother wobble
+                this.wobblePhase = Math.random() * Math.PI * 2;
+                this.life = 1.0;
+                this.active = false;
+                this.age = 0; // Track age for fade-in
+                
+                setTimeout(() => { this.active = true; }, this.delay);
+            }
+
+            update() {
+                if (!this.active) return;
+                
+                this.age++;
+                
+                // Move upward
+                this.y -= this.speed;
+                
+                // Wobble side to side
+                this.wobblePhase += this.wobbleSpeed;
+                this.x = this.startX + Math.sin(this.wobblePhase) * this.wobbleAmount;
+                
+                // Fade out as it gets higher
+                const distanceTraveled = this.startY - this.y;
+                const totalDistance = height * 1.2;
+                this.life = 1 - (distanceTraveled / totalDistance);
+                
+                // Fade in during first 20 frames
+                let fadeMultiplier = 1;
+                if (this.age < 20) {
+                    fadeMultiplier = this.age / 20;
+                }
+                this.opacity = this.life * 0.7 * fadeMultiplier;
+            }
+
+            draw() {
+                if (!this.active || this.life <= 0 || this.y < -this.radius) return;
+                
+                ctx.save();
+                
+                // Draw bubble with gradient
+                const gradient = ctx.createRadialGradient(
+                    this.x - this.radius * 0.3, 
+                    this.y - this.radius * 0.3, 
+                    0,
+                    this.x, 
+                    this.y, 
+                    this.radius
+                );
+                gradient.addColorStop(0, `hsla(${this.hue}, 90%, 75%, ${this.opacity})`);
+                gradient.addColorStop(0.5, `hsla(${this.hue}, 85%, 60%, ${this.opacity * 0.85})`);
+                gradient.addColorStop(1, `hsla(${this.hue}, 80%, 45%, ${this.opacity * 0.4})`);
+                
+                // Add soft glow
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = `hsla(${this.hue}, 90%, 60%, ${this.opacity * 0.5})`;
+                
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = gradient;
+                ctx.fill();
+                
+                // Add brighter highlight
+                const highlightGradient = ctx.createRadialGradient(
+                    this.x - this.radius * 0.3, 
+                    this.y - this.radius * 0.3, 
+                    0,
+                    this.x - this.radius * 0.3, 
+                    this.y - this.radius * 0.3, 
+                    this.radius * 0.4
+                );
+                highlightGradient.addColorStop(0, `rgba(255, 255, 255, ${this.opacity * 0.8})`);
+                highlightGradient.addColorStop(1, `rgba(255, 255, 255, 0)`);
+                
+                ctx.beginPath();
+                ctx.arc(this.x - this.radius * 0.25, this.y - this.radius * 0.25, this.radius * 0.35, 0, Math.PI * 2);
+                ctx.fillStyle = highlightGradient;
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        class FluidWave {
+            constructor(x, y, hue, delay, shape) {
+                this.x = x;
+                this.y = y;
+                this.hue = hue;
+                this.delay = delay;
+                this.radius = 0;
+                this.maxRadius = Math.max(width, height) * 1.8;
+                this.opacity = 0.4;
+                this.growth = 1.8; // Slower growth for calmer waves
+                this.thickness = 35 + Math.random() * 25; // Thinner, more consistent
+                this.amplitude = 8 + Math.random() * 10; // Reduced wobble
+                this.frequency = 2 + Math.floor(Math.random() * 3); // Fewer waves
+                this.phase = Math.random() * Math.PI * 2;
+                this.life = 1.0;
+                this.active = false;
+                this.shape = shape || animationShape;
+                this.age = 0; // Track age for fade-in effect
+                
+                // For stars
+                this.points = 5; // Fixed 5 points for consistency
+                this.rotation = 0;
+                this.rotationSpeed = (Math.random() - 0.5) * 0.04; // Much faster rotation
+                
+                // Add scale pulsing and wobble for more interest
+                this.scalePhase = Math.random() * Math.PI * 2;
+                this.scaleSpeed = 0.03 + Math.random() * 0.02;
+                this.wobbleX = 0;
+                this.wobbleY = 0;
+                this.wobbleSpeed = 0.02 + Math.random() * 0.02;
+                this.wobbleAmount = 30 + Math.random() * 40;
+                
+                // Random shape variation for stars mode
+                if (this.shape === 'stars') {
+                    const shapes = ['star', 'diamond', 'circle'];
+                    this.shapeVariation = shapes[Math.floor(Math.random() * shapes.length)];
+                } else {
+                    this.shapeVariation = null;
+                }
+                
+                setTimeout(() => { this.active = true; }, this.delay);
+            }
+
+            update() {
+                if (!this.active) return;
+                this.age++;
+                this.radius += this.growth;
+                this.growth *= 0.996; // Slower deceleration for smoother movement
+                this.life -= 0.002; // Slightly faster fade for calmer overall effect
+                
+                // Fade in during first 30 frames, then fade out based on life
+                let fadeMultiplier = 1;
+                if (this.age < 30) {
+                    fadeMultiplier = this.age / 30; // Fade in
+                }
+                this.opacity = this.life * 0.4 * fadeMultiplier;
+                
+                this.rotation += this.rotationSpeed;
+                
+                // Add pulsing scale effect
+                this.scalePhase += this.scaleSpeed;
+                
+                // Add wobble movement for stars
+                if (this.shape === 'stars') {
+                    this.wobbleX = Math.sin(this.scalePhase) * this.wobbleAmount * (this.life * 0.5);
+                    this.wobbleY = Math.cos(this.scalePhase * 1.3) * this.wobbleAmount * (this.life * 0.5);
+                }
+            }
+
+            draw() {
+                if (!this.active || this.life <= 0) return;
+                ctx.save();
+                
+                // Apply wobble offset for stars
+                const drawX = this.shape === 'stars' ? this.x + this.wobbleX : this.x;
+                const drawY = this.shape === 'stars' ? this.y + this.wobbleY : this.y;
+                
+                // Apply pulsing scale
+                const scaleFactor = this.shape === 'stars' ? 1 + Math.sin(this.scalePhase) * 0.15 : 1;
+                const drawRadius = this.radius * scaleFactor;
+                
+                ctx.beginPath();
+                const segments = 80;
+                
+                if (this.shape === 'stars') {
+                    // Draw different shapes based on variation
+                    if (this.shapeVariation === 'diamond') {
+                        // Diamond shape
+                        ctx.beginPath();
+                        ctx.moveTo(drawX, drawY - drawRadius);
+                        ctx.lineTo(drawX + drawRadius * 0.6, drawY);
+                        ctx.lineTo(drawX, drawY + drawRadius);
+                        ctx.lineTo(drawX - drawRadius * 0.6, drawY);
+                        ctx.closePath();
+                    } else if (this.shapeVariation === 'circle') {
+                        // Circle shape (solid)
+                        ctx.beginPath();
+                        ctx.arc(drawX, drawY, drawRadius * 0.7, 0, Math.PI * 2);
+                        ctx.closePath();
+                    } else {
+                        // Star shape (default)
+                        for (let i = 0; i < this.points * 2; i++) {
+                            const angle = (i / (this.points * 2)) * Math.PI * 2 + this.rotation;
+                            const r = i % 2 === 0 ? drawRadius : drawRadius * 0.5;
+                            const px = drawX + Math.cos(angle) * r;
+                            const py = drawY + Math.sin(angle) * r;
+                            if (i === 0) ctx.moveTo(px, py);
+                            else ctx.lineTo(px, py);
+                        }
+                        ctx.closePath();
+                    }
+                    
+                    // Create gradient for all shapes
+                    const gradient = ctx.createRadialGradient(drawX, drawY, 0, drawX, drawY, drawRadius);
+                    gradient.addColorStop(0, `hsla(${this.hue}, 90%, 70%, ${this.opacity * 0.9})`);
+                    gradient.addColorStop(0.5, `hsla(${this.hue}, 85%, 55%, ${this.opacity * 0.7})`);
+                    gradient.addColorStop(1, `hsla(${this.hue}, 80%, 40%, ${this.opacity * 0.3})`);
+                    
+                    ctx.fillStyle = gradient;
+                    ctx.shadowBlur = 120; // Much more blur for softer stars
+                    ctx.shadowColor = `hsla(${this.hue}, 85%, 50%, ${this.opacity})`;
+                    ctx.fill();
+                    
+                    // Add subtle outline
+                    ctx.strokeStyle = `hsla(${this.hue}, 90%, 60%, ${this.opacity * 0.4})`;
+                    ctx.lineWidth = 2;
+                    ctx.lineJoin = 'round';
+                    ctx.stroke();
+                } else {
+                    // Waves (default)
+                    for (let i = 0; i <= segments; i++) {
+                        const angle = (i / segments) * Math.PI * 2;
+                        const wobble = Math.sin(angle * this.frequency + (time * 0.02) + this.phase) * this.amplitude;
+                        const r = this.radius + wobble;
+                        const px = this.x + Math.cos(angle) * r;
+                        const py = this.y + Math.sin(angle) * r;
+                        if (i === 0) ctx.moveTo(px, py);
+                        else ctx.lineTo(px, py);
+                    }
+                    ctx.closePath();
+                    
+                    ctx.strokeStyle = `hsla(${this.hue}, 85%, 50%, ${this.opacity})`;
+                    ctx.lineWidth = this.thickness;
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
+                    ctx.shadowBlur = 50; // Softer glow for calmer effect
+                    ctx.shadowColor = `hsla(${this.hue}, 85%, 40%, ${this.opacity * 0.7})`;
+                    ctx.stroke();
+                }
+                
+                ctx.restore();
+            }
+        }
+
+        function spawnSensoryEffect(x, y, forceShape) {
+            let hue;
+            const [min, max] = activeHueRange;
+            
+            if (min === 0 && max === 360) {
+                // Classic wheel cycle
+                currentHue = (currentHue + hueShiftPerTouch) % 360;
+                hue = currentHue;
+            } else {
+                // Random within restricted range
+                hue = min + Math.random() * (max - min);
+            }
+            
+            // Determine which shape to use
+            let shapeToUse = forceShape || animationShape;
+            
+            if (shapeToUse === 'bubbles') {
+                // Spawn bubbles from bottom of screen
+                const bubbleCount = 8;
+                for (let i = 0; i < bubbleCount; i++) {
+                    const spreadX = x + (Math.random() - 0.5) * width * 0.4;
+                    const hueVariation = hue + (Math.random() - 0.5) * 30;
+                    elements.push(new Bubble(spreadX, y, hueVariation, i * 200));
+                }
+            } else {
+                // Waves spawn from top of screen for better visual line of sight
+                const waveCount = 2;
+                for (let i = 0; i < waveCount; i++) {
+                    const topY = 100 + Math.random() * 150; // Near top of screen
+                    const spreadX = x + (Math.random() - 0.5) * width * 0.3;
+                    elements.push(new FluidWave(spreadX, topY, hue, i * 800, shapeToUse));
+                }
+            }
+            
+            return shapeToUse;
+        }
+
+        let lastMoveTime = 0;
+
+        function clearAllTimers() {
+            if (cooldownTimer) clearTimeout(cooldownTimer);
+            if (buttonRestoreTimer) clearTimeout(buttonRestoreTimer);
+            cooldownTimer = null;
+            buttonRestoreTimer = null;
+        }
+
+        function startCooldown(duration) {
+            clearAllTimers();
+            isCooldown = true;
+            
+            cooldownTimer = setTimeout(() => {
+                isCooldown = false;
+                cooldownTimer = null;
+                // Restore button visibility after cooldown
+                if (isSwitchEnabled) {
+                    cueArea.style.opacity = '1';
+                }
+            }, duration);
+        }
+
+        function handleInteraction(e) {
+            // 1. Ignore if interacting with specific UI elements
+            if (e.target.id === 'cue-area' || settingsBtn.contains(e.target) || settingsDrawer.contains(e.target)) {
+                return;
+            }
+
+            // 2. Prevent default browser behavior (scrolling/zooming) on the canvas area
+            if (e.cancelable) e.preventDefault();
+
+            // 3. Settings open check
+            if (settingsDrawer.classList.contains('open')) return;
+
+            // 4. Tap Mode check
+            if (tapMode === 'button') return;
+
+            // 5. Cooldown check - block immediately
+            if (isCooldown) return;
+
+            // 6. Determine cooldown duration
+            let cooldownDuration;
+            if (cooldownMode === 'animation') {
+                cooldownDuration = 12000;
+            } else if (cooldownMode === '8s') {
+                cooldownDuration = 8000;
+            } else if (cooldownMode === '10s') {
+                cooldownDuration = 10000;
+            }
+
+            // 7. Spawn logic
+            const processTouch = (clientX, clientY) => {
+                spawnSensoryEffect(clientX, clientY);
+            };
+
+            if (e.changedTouches) {
+                // Trigger for first touch only
+                if (e.changedTouches.length > 0) {
+                    processTouch(e.changedTouches[0].clientX, e.changedTouches[0].clientY);
+                    startCooldown(cooldownDuration);
+                }
+            } else {
+                // Mouse click
+                processTouch(e.clientX, e.clientY);
+                startCooldown(cooldownDuration);
+            }
+        }
+
+        window.addEventListener('mousedown', handleInteraction);
+        // REMOVED move listeners to prevent "spray"
+        // window.addEventListener('mousemove', handleInteraction); 
+        window.addEventListener('touchstart', handleInteraction, { passive: false });
+        // window.addEventListener('touchmove', handleInteraction, { passive: false });
+
+        const triggerCue = (e) => {
+            e.stopPropagation();
+            if (e.cancelable) e.preventDefault();
+            if (settingsDrawer.classList.contains('open')) return;
+            if (!isSwitchEnabled) return;
+
+            // Cooldown check for button tap - block immediately
+            if (isCooldown) return;
+
+            clearAllTimers();
+            
+            // Determine cooldown duration
+            let cooldownDuration;
+            if (cooldownMode === 'animation') {
+                cooldownDuration = 12000;
+            } else if (cooldownMode === '8s') {
+                cooldownDuration = 8000;
+            } else if (cooldownMode === '10s') {
+                cooldownDuration = 10000;
+            }
+
+            // Set cooldown immediately to prevent multiple triggers
+            isCooldown = true;
+            
+            cueArea.style.opacity = '0.05';
+
+            // Calculate center dynamically based on position
+            const rect = cueArea.getBoundingClientRect();
+            let centerX, centerY;
+
+            // Logic for animation origin point
+            if (currentPosition === 'pos-center') {
+                centerX = rect.left + rect.width / 2;
+                centerY = rect.top + rect.height / 2;
+            } else if (currentPosition === 'pos-bottom') {
+                centerX = rect.left + rect.width / 2;
+                centerY = rect.top + 20;
+            } else if (currentPosition === 'pos-top') {
+                centerX = rect.left + rect.width / 2;
+                centerY = rect.bottom - 20;
+            } else if (currentPosition === 'pos-left') {
+                centerX = rect.right - 20;
+                centerY = rect.top + rect.height / 2;
+            } else if (currentPosition === 'pos-right') {
+                centerX = rect.left + 20;
+                centerY = rect.top + rect.height / 2;
+            }
+            
+            const spawnCount = 3;
+            
+            for(let i = 0; i < spawnCount; i++) {
+                setTimeout(() => {
+                    let spawnX = centerX + (Math.random() - 0.5) * 200;
+                    let spawnY;
+                    
+                    // Waves spawn from top of screen, bubbles from bottom
+                    if (animationShape === 'bubbles') {
+                        spawnY = centerY + (Math.random() - 0.5) * 150;
+                    } else {
+                        // Waves spawn from top for better visual line of sight
+                        spawnY = 100 + Math.random() * 150;
+                    }
+                    
+                    // Keep within screen bounds
+                    const padding = 100;
+                    spawnX = Math.max(padding, Math.min(width - padding, spawnX));
+                    
+                    spawnSensoryEffect(spawnX, spawnY, animationShape);
+                }, i * 1200);
+            }
+
+            // Set cooldown timer
+            cooldownTimer = setTimeout(() => {
+                isCooldown = false;
+                cooldownTimer = null;
+            }, cooldownDuration);
+
+            // Restore button visibility
+            buttonRestoreTimer = setTimeout(() => {
+                if (isSwitchEnabled) {
+                    cueArea.style.opacity = '1';
+                }
+                buttonRestoreTimer = null;
+            }, cooldownDuration);
         };
 
-        // Filter stories based on lock state:
-        // - Locked (child view): Only show cached/ready-to-play stories
-        // - Unlocked (parent view): Show all stories so parents can download them
-        const allSimpleStories = library.filter(s => s.folder === 'Simple Stories');
-        const allUserStories = library.filter(s => !s.folder);
+        cueArea.addEventListener('mousedown', triggerCue);
+        cueArea.addEventListener('touchstart', triggerCue, { passive: false });
 
-        const simpleStories = showEditControls
-          ? allSimpleStories
-          : allSimpleStories.filter(s => s.status === 'cached');
-        const userStories = showEditControls
-          ? allUserStories
-          : allUserStories.filter(s => s.status === 'cached');
+        function animate() {
+            time++;
+            ctx.globalAlpha = 1.0;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.12)'; 
+            ctx.fillRect(0, 0, width, height);
 
-        // Check if there are any stories at all (for empty state message)
-        const hasAnyCachedStories = simpleStories.length > 0 || userStories.length > 0;
-        const hasAnyStories = allSimpleStories.length > 0 || allUserStories.length > 0;
+            if (elements.length > 0) {
+                for (let i = elements.length - 1; i >= 0; i--) {
+                    elements[i].update();
+                    elements[i].draw();
+                    
+                    // Remove based on element type
+                    if (elements[i] instanceof Bubble) {
+                        if (elements[i].life <= 0 || elements[i].y < -elements[i].radius) {
+                            elements.splice(i, 1);
+                        }
+                    } else {
+                        if (elements[i].life <= 0 || elements[i].radius > elements[i].maxRadius) {
+                            elements.splice(i, 1);
+                        }
+                    }
+                }
+            } else {
+                ctx.fillStyle = '#000000';
+                ctx.fillRect(0, 0, width, height);
+            }
+            requestAnimationFrame(animate);
+        }
 
-        return (
-          <div className={`min-h-screen ${currentTheme.pageBg} p-6 md:p-8 transition-colors duration-300`}>
-            {renderBoundary()}
-            {showSettings && SettingsModal()}
+        init();
 
-            <header className="max-w-4xl mx-auto flex items-center justify-between mb-8">
-              <div className="flex items-center gap-3">
-                {viewFolder ? (
-                  <button onClick={() => setViewFolder(null)} className={`flex items-center gap-2 font-bold ${currentTheme.textMain} hover:opacity-80 transition-colors`}>
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center border-2 ${theme.includes('high-contrast') ? `${currentTheme.cardBg} ${currentTheme.border}` : `${currentTheme.inputBg} ${currentTheme.border}`}`}>
-                      <ArrowLeft size={20} className={currentTheme.textMain} />
-                    </div>
-                    <span className="text-xl">Back to Library</span>
-                  </button>
-                ) : (
-                  <>
-                    <div className={`w-12 h-12 rounded-xl bg-indigo-600 flex items-center justify-center shadow-lg text-white`}>
-                      <BookOpen size={24} />
-                    </div>
-                    <h1 className={`text-3xl font-bold font-serif ${currentTheme.textMain} tracking-tight`}>StoryTap</h1>
-                  </>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                {!showEditControls && (
-                  <button
-                    onClick={handleLockClick}
-                    onMouseDown={startHoldLock} onMouseUp={endHoldLock} onMouseLeave={endHoldLock}
-                    onTouchStart={startHoldLock} onTouchEnd={endHoldLock} onTouchCancel={endHoldLock}
-                    className={`relative p-3 rounded-2xl shadow-md transition-all border ${currentTheme.cardBg} ${currentTheme.border} ${currentTheme.textSub} ${isHoldingLock ? `ring-4 ring-offset-4 ring-${currentTheme.highlight}-400 scale-110 z-50` : ''}`}
-                    title={unlockAction.startsWith('hold') ? "Hold to unlock" : "Tap 3 times to unlock"}
-                  >
-                    {isHoldingLock && (
-                      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 48 48">
-                        <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="3" strokeOpacity="0.15" />
-                        <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="126" strokeDashoffset={126 - (lockHoldProgress / 100) * 126} strokeLinecap="round" style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }} />
-                      </svg>
-                    )}
-                    <Lock size={22} />
-                  </button>
-                )}
-                <button
-                  onClick={handleSettingsClick}
-                  onMouseDown={startHoldSettings} onMouseUp={endHoldSettings} onMouseLeave={endHoldSettings}
-                  onTouchStart={startHoldSettings} onTouchEnd={endHoldSettings} onTouchCancel={endHoldSettings}
-                  className={`relative p-3 rounded-2xl shadow-md hover:shadow-lg transition-all border ${currentTheme.cardBg} ${currentTheme.border} ${currentTheme.textSub} ${isHoldingSettings ? `ring-4 ring-offset-4 ring-${currentTheme.highlight}-400 scale-110 z-50` : ''}`}
-                  title="Hold for settings"
-                >
-                  {isHoldingSettings && (
-                    <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 48 48">
-                      <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="3" strokeOpacity="0.15" />
-                      <circle cx="24" cy="24" r="20" fill="none" stroke="currentColor" strokeWidth="3" strokeDasharray="126" strokeDashoffset={126 - (settingsHoldProgress / 100) * 126} strokeLinecap="round" style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }} />
-                    </svg>
-                  )}
-                  <Settings size={22} />
-                </button>
-              </div>
-            </header>
-            {(isHoldingSettings || isHoldingLock || lockFeedback || settingsFeedback) && (
-              <div className={`max-w-4xl mx-auto -mt-6 mb-4 text-center text-sm font-bold animate-pulse ${currentTheme.textSub}`}>
-                {lockFeedback || settingsFeedback || (isHoldingLock ? 'Hold to unlock...' : 'Hold for settings...')}
-              </div>
-            )}
-
-            <div className="max-w-4xl mx-auto pb-12">
-
-              {/* FOLDER VIEW: Simple Stories */}
-              {viewFolder === 'Simple Stories' && (
-                <div>
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${theme.includes('high-contrast') ? `border ${currentTheme.border} ${currentTheme.textMain}` : 'bg-amber-100 text-amber-500'}`}>
-                      <Star size={24} fill="currentColor" />
-                    </div>
-                    <h2 className={`text-2xl font-bold ${currentTheme.textMain}`}>Simple Stories</h2>
-                  </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                    {simpleStories.map(renderStoryCard)}
-
-                    {/* Empty state for folder */}
-                    {simpleStories.length === 0 && (
-                      <div className={`col-span-full flex flex-col items-center justify-center py-12 px-6 text-center`}>
-                        <p className={`text-lg ${currentTheme.textSub}`}>
-                          {showEditControls
-                            ? "Download some stories to make them available for reading."
-                            : "No stories downloaded yet. Ask a grown-up to add some!"}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* ROOT VIEW: Folders + User Stories */}
-              {viewFolder === null && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-
-                  {/* Create New (Edit Mode Only, Root Only) */}
-                  {showEditControls && (
-                    <button onClick={createNewBook} className={`aspect-[3/4] rounded-3xl border-4 border-dashed flex flex-col items-center justify-center gap-4 transition-all group ${currentTheme.border} ${theme.includes('high-contrast') ? `hover:border-current hover:bg-white/5 ${currentTheme.textMain}` : `hover:border-${currentTheme.highlight}-400 hover:bg-${currentTheme.highlight}-50/30`}`}>
-                      <div className={`w-20 h-20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform ${theme.includes('high-contrast') ? `border-2 ${currentTheme.border} ${currentTheme.textMain}` : `bg-${currentTheme.highlight}-100 text-${currentTheme.highlight}-600`}`}>
-                        <Plus size={40} />
-                      </div>
-                      <span className={`font-bold text-lg ${currentTheme.textSub}`}>Create New Book</span>
-                    </button>
-                  )}
-
-                  {/* FOLDER: Simple Stories */}
-                  {simpleStories.length > 0 && (
-                    <button onClick={() => setViewFolder('Simple Stories')} className={`aspect-[3/4] relative rounded-3xl overflow-hidden shadow-xl transition-all cursor-pointer group hover:scale-[1.02] border-4 border-slate-900 ${theme.includes('high-contrast') ? currentTheme.cardBg : 'bg-amber-50 hover:bg-amber-100'}`}>
-                      <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-center">
-                        <div className="relative mb-6 group-hover:scale-110 transition-transform duration-300">
-                          {!theme.includes('high-contrast') && <div className="absolute inset-0 bg-amber-200 blur-xl opacity-50 rounded-full"></div>}
-                          <Star size={64} className={`relative drop-shadow-sm ${theme.includes('high-contrast') ? currentTheme.textMain : 'text-amber-400'}`} fill="currentColor" />
-                        </div>
-                        <h3 className={`text-2xl font-bold mb-2 ${theme.includes('high-contrast') ? currentTheme.textMain : 'text-amber-900'}`}>Simple Stories</h3>
-                        <div className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-bold shadow-sm ${theme.includes('high-contrast') ? `border ${currentTheme.border} ${currentTheme.textMain}` : 'bg-white/60 text-amber-700'}`}>
-                          <BookOpen size={14} />
-                          {simpleStories.length} Books
-                        </div>
-                      </div>
-                    </button>
-                  )}
-
-                  {/* User Stories */}
-                  {userStories.map(renderStoryCard)}
-
-                  {/* Empty State: No stories available */}
-                  {!hasAnyCachedStories && !showEditControls && (
-                    <div className={`col-span-full flex flex-col items-center justify-center py-16 px-6 text-center`}>
-                      <div className={`w-24 h-24 rounded-full flex items-center justify-center mb-6 ${theme.includes('high-contrast') ? `border-2 ${currentTheme.border}` : 'bg-indigo-100'}`}>
-                        <BookOpen size={48} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-indigo-400'} />
-                      </div>
-                      <h3 className={`text-2xl font-bold mb-3 ${currentTheme.textMain}`}>No Stories Yet!</h3>
-                      <p className={`text-lg mb-6 max-w-sm ${currentTheme.textSub}`}>
-                        Ask a grown-up to unlock and download some stories for you.
-                      </p>
-                      <div className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm ${theme.includes('high-contrast') ? `border ${currentTheme.border} ${currentTheme.textSub}` : 'bg-slate-100 text-slate-500'}`}>
-                        <Lock size={14} />
-                        <span>Hold the lock button to unlock</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Empty State for unlocked parent view */}
-                  {!hasAnyStories && showEditControls && !viewFolder && (
-                    <div className={`col-span-full flex flex-col items-center justify-center py-8 px-6 text-center ${userStories.length === 0 && simpleStories.length === 0 ? '' : 'hidden'}`}>
-                      <p className={`text-sm ${currentTheme.textSub}`}>
-                        Tap "Create New Book" to add your first story, or download stories from Simple Stories.
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-
-            {/* Storage Indicator (Fixed at bottom - only visible when unlocked for parents) */}
-            {showEditControls && (
-              <div className="fixed bottom-0 left-0 right-0 z-40 pointer-events-none">
-                <div className="max-w-4xl mx-auto px-6 pb-6 pointer-events-auto">
-                  <div className={`rounded-2xl shadow-2xl border-2 overflow-hidden ${currentTheme.cardBg} ${currentTheme.border}`}>
-                    <div className="p-4 flex items-center justify-between gap-4">
-                      {/* Left: Storage Info */}
-                      <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${theme.includes('high-contrast') ? `border ${currentTheme.border}` : 'bg-indigo-100'}`}>
-                          <Database size={20} className={theme.includes('high-contrast') ? currentTheme.textMain : 'text-indigo-600'} />
-                        </div>
-                        <div>
-                          <div className={`font-bold text-sm ${currentTheme.textMain}`} style={{ color: theme.includes('high-contrast') ? (theme === 'high-contrast-yb' ? '#facc15' : '#ffffff') : undefined }}>
-                            {cacheStats.count === 0 ? 'No cached audio' : `${(cacheStats.totalSize / (1024 * 1024)).toFixed(1)} MB cached`}
-                          </div>
-                          <div className={`text-xs ${currentTheme.textSub}`} style={{ color: theme.includes('high-contrast') ? (theme === 'high-contrast-yb' ? '#fde047' : '#d1d5db') : undefined }}>
-                            {cacheStats.count === 0 ? 'Download stories to cache audio' : `${cacheStats.count} audio pages saved`}
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Right: Clear Button */}
-                      {cacheStats.count > 0 && (
-                        <button
-                          onClick={handleClearCache}
-                          className={`px-4 py-2 rounded-xl font-bold text-sm transition-all active:scale-95 shadow-md flex items-center gap-2 ${theme.includes('high-contrast') ? `border ${currentTheme.border} ${currentTheme.textMain}` : 'bg-rose-500 hover:bg-rose-600 text-white'}`}
-                        >
-                          <Trash2 size={16} />
-                          Clear All
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        );
-      }
-
-      // =============================================
-      // CREATE BOOK SCREEN
-      // =============================================
-      if (mode === 'create') {
-        const isHighContrast = theme.includes('high-contrast');
-        // Use thick dark border for standard themes, or theme border for high contrast
-        const activeBorder = isHighContrast ? `border-4 ${currentTheme.border}` : 'border-4 border-slate-900';
-        const labelClass = `text-lg font-bold uppercase tracking-widest mb-3 block ${currentTheme.textSub} opacity-90`;
-
-        return (
-          <div className={`min-h-screen ${currentTheme.pageBg} p-6 md:p-8 transition-colors duration-300`}>
-            {renderBoundary()}
-            {showSettings && SettingsModal()}
-
-            <div className="max-w-3xl mx-auto space-y-8 pb-12">
-              <header className="flex items-center justify-between mb-8">
-                <button onClick={() => setMode('library')} className={`flex items-center gap-3 font-bold ${currentTheme.textMain} hover:opacity-80 transition-all active:scale-95`}>
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${currentTheme.cardBg} ${activeBorder}`}>
-                    <ArrowLeft size={24} className={currentTheme.textMain} strokeWidth={3} />
-                  </div>
-                  <span className="text-xl">Back to Library</span>
-                </button>
-                <div className={`text-2xl font-black font-serif ${currentTheme.textMain}`}>{editingId ? 'Edit Story' : 'Create Story'}</div>
-              </header>
-
-              <div className={`${currentTheme.cardBg} rounded-3xl p-6 md:p-8 space-y-10 ${activeBorder} shadow-2xl`}>
-
-                {/* Intro / Help Text */}
-                <div className={`p-5 rounded-2xl flex gap-4 ${isHighContrast ? `border-4 ${currentTheme.border}` : 'bg-slate-100 border-4 border-slate-200'}`}>
-                  <div className={`p-3 rounded-xl h-fit flex-shrink-0 ${isHighContrast ? `${currentTheme.highlightBgLight} ${currentTheme.textMain}` : 'bg-indigo-500 text-white'}`}>
-                    <Sparkles size={24} fill="currentColor" />
-                  </div>
-                  <div className="space-y-4">
-                    <div>
-                      <h3 className={`font-bold text-lg mb-1 ${currentTheme.textMain}`}>Create Custom Stories</h3>
-                      <p className={`text-base leading-relaxed ${currentTheme.textSub}`}>
-                        In this menu, you can input a short story for your child. It will be processed locally by a task-specific AI model on your device into a realistic voice. <strong>No data will leave your device.</strong>
-                      </p>
-                    </div>
-
-                    <div className={`text-base leading-relaxed ${currentTheme.textSub} opacity-90 space-y-2`}>
-                      <p className="italic">
-                        Note: Processing (saving the story to your child's library) <strong>takes time</strong> because it runs entirely on your device. Speed depends on the power of your device (phone, tablet, or computer).
-                      </p>
-                      <p className={`text-sm font-bold border-l-4 ${isHighContrast ? 'border-current' : 'border-indigo-400'} pl-3 py-1`}>
-                        This app is not connected to the cloud, so you will need to leave your app open while initially processing the story. This only needs to be done once.
-                        <span className="block font-normal opacity-90 mt-1">Tip: 5-8 sentences is ideal for most mobile devices.</span>
-                      </p>
-                    </div>
-
-                    <div className={`mt-2 pt-3 border-t-2 ${isHighContrast ? 'border-current' : 'border-slate-300'} opacity-80 text-sm ${currentTheme.textSub}`}>
-                      <div className={`font-bold uppercase text-xs tracking-wider mb-1 flex items-center gap-1 ${currentTheme.textMain}`}><Database size={12} /> Storage Info</div>
-                      Stories are saved in your internet browser and consume space. You can check usage in the Settings menu and delete books to reclaim space.
-                    </div>
-                  </div>
-                </div>
-
-                {/* Title Input */}
-                <div>
-                  <label className={labelClass}>Story Title</label>
-                  <input
-                    type="text"
-                    value={storyTitle}
-                    onChange={e => setStoryTitle(e.target.value)}
-                    className={`w-full p-5 rounded-2xl text-2xl font-bold focus:outline-none transition-all ${currentTheme.inputBg} ${currentTheme.textMain} ${activeBorder} focus:ring-4 focus:ring-current placeholder:opacity-50`}
-                    style={{ color: theme.includes('high-contrast') ? (theme === 'high-contrast-yb' ? '#facc15' : '#ffffff') : undefined }}
-                    placeholder="e.g. The Brave Little Toaster"
-                  />
-                </div>
-
-                {/* Text Input */}
-                <div>
-                  <label className={labelClass}>Story Text</label>
-                  <textarea
-                    value={rawText}
-                    onChange={e => setRawText(e.target.value)}
-                    className={`w-full min-h-[240px] p-5 rounded-2xl text-xl leading-relaxed focus:outline-none transition-all font-serif ${currentTheme.inputBg} ${currentTheme.textMain} ${activeBorder} focus:ring-4 focus:ring-current placeholder:opacity-50`}
-                    style={{ color: theme.includes('high-contrast') ? (theme === 'high-contrast-yb' ? '#facc15' : '#ffffff') : undefined }}
-                    placeholder="Type or paste the full story here..."
-                  />
-                </div>
-
-                {/* Card Color */}
-                <div>
-                  <label className={labelClass}>Card Header Color</label>
-                  <div className="grid grid-cols-6 gap-4">
-                    {['indigo', 'emerald', 'amber', 'rose', 'purple', 'cyan'].map(c => {
-                      const colorMap = {
-                        indigo: 'bg-indigo-500',
-                        emerald: 'bg-emerald-500',
-                        amber: 'bg-amber-500',
-                        rose: 'bg-rose-500',
-                        purple: 'bg-purple-500',
-                        cyan: 'bg-cyan-500'
-                      };
-                      const bg = colorMap[c];
-                      const isSelected = storyColor === c;
-
-                      return (
-                        <button
-                          key={c}
-                          onClick={() => setStoryColor(c)}
-                          className={`h-16 rounded-2xl transition-all ${bg} ${activeBorder} ${isSelected ? 'ring-4 ring-offset-4 ring-slate-900 scale-105 shadow-xl z-10' : 'opacity-80 hover:opacity-100 hover:scale-105'}`}
-                          title={`Select ${c} color`}
-                        >
-                          {isSelected && <Check className="mx-auto text-white" size={32} strokeWidth={4} />}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Save Button */}
-                <button onClick={saveCreatedBook} disabled={!rawText.trim() || !storyTitle.trim()} className={`w-full py-6 rounded-2xl text-2xl font-black flex items-center justify-center gap-4 transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed ${isHighContrast ? `${currentTheme.cardBg} ${currentTheme.textMain} border-4 ${currentTheme.border}` : 'bg-slate-900 text-white shadow-xl hover:bg-slate-800'}`}>
-                  <Sparkles size={28} />
-                  {editingId ? 'Save Changes' : 'Save New Story'}
-                </button>
-
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      // =============================================
-      // READING MODE
-      // =============================================
-      const isCover = currentIndex === -1;
-      const isEnd = currentIndex >= sentences.length;
-      const isReading = !isCover && !isEnd;
-      const progress = sentences.length ? ((currentIndex + 1) / sentences.length) * 100 : 0;
-
-      return (
-        <div
-          onClick={handleInteraction}
-          onContextMenu={(e) => e.preventDefault()}
-          onKeyDown={(e) => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); handleInteraction(e); } }}
-          className="fixed inset-0 select-none cursor-pointer overflow-hidden"
-          style={{ touchAction: 'none' }}
-          role="button"
-          tabIndex={0}
-          aria-label={isCover ? 'Tap anywhere to begin the story' : isEnd ? 'Tap to start over' : `Sentence ${currentIndex + 1} of ${sentences.length}. Tap for next.`}
-          aria-live="polite"
-        >
-          {renderBoundary()}
-          <audio ref={audioRef} onEnded={handleAudioEnded} preload="auto" hidden />
-
-          <div className="absolute top-6 left-6 z-[60]">
-            <button
-              onClick={handleExitClick}
-              onMouseDown={startHoldExit} onMouseUp={endHoldExit} onMouseLeave={endHoldExit}
-              onTouchStart={startHoldExit} onTouchEnd={endHoldExit} onTouchCancel={endHoldExit}
-              className={`relative p-3 rounded-full transition-all ${currentTheme.readingDark ? 'bg-white/10 hover:bg-white/20 text-white/60 hover:text-white/90' : 'bg-black/10 hover:bg-black/20 text-black/60 hover:text-black/90'}`}
-            >
-              {isHoldingExit && (
-                <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
-                  <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.2" />
-                  <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="100" strokeDashoffset={100 - holdProgress} strokeLinecap="round" />
-                </svg>
-              )}
-              <ArrowLeft size={18} />
-            </button>
-            {(isHoldingExit || exitFeedback) && <div className={`absolute left-14 top-1/2 -translate-y-1/2 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap ${currentTheme.readingDark ? 'bg-black/80 text-white' : 'bg-white/90 text-black shadow-lg'}`}>{exitFeedback || 'Hold to exit...'}</div>}
-          </div>
-
-          {/* Fullscreen toggle - now protected */}
-          {!isStandalone() && (
-            <div className="absolute top-6 right-6 z-[60]">
-              <button
-                onClick={handleFSClick}
-                onMouseDown={startHoldFS} onMouseUp={endHoldFS} onMouseLeave={endHoldFS}
-                onTouchStart={startHoldFS} onTouchEnd={endHoldFS} onTouchCancel={endHoldFS}
-                className={`relative p-3 rounded-full transition-all ${currentTheme.readingDark ? 'bg-white/10 hover:bg-white/20 text-white/60 hover:text-white/90' : 'bg-black/10 hover:bg-black/20 text-black/60 hover:text-black/90'} ${isHoldingFS ? `ring-4 ring-offset-4 ring-${currentTheme.highlight}-400 ring-offset-black/20 scale-110` : ''}`}
-                title={isFullscreenMode ? 'Exit fullscreen' : 'Enter fullscreen'}
-              >
-                {isHoldingFS && (
-                  <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 36 36">
-                    <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="2" strokeOpacity="0.2" />
-                    <circle cx="18" cy="18" r="16" fill="none" stroke="currentColor" strokeWidth="2" strokeDasharray="100" strokeDashoffset={100 - fsHoldProgress} strokeLinecap="round" />
-                  </svg>
-                )}
-                {isFullscreenMode ? <Minimize2 size={18} /> : <Maximize2 size={18} />}
-              </button>
-              {(isHoldingFS || fsFeedback) && <div className={`absolute right-14 top-1/2 -translate-y-1/2 text-xs px-3 py-1.5 rounded-lg whitespace-nowrap ${currentTheme.readingDark ? 'bg-black/80 text-white' : 'bg-white/90 text-black shadow-lg'}`}>{fsFeedback || 'Hold to toggle...'}</div>}
-            </div>
-          )}
-
-          {isCover && (
-            <div className={`absolute inset-0 ${currentTheme.coverBg} flex flex-col items-center justify-center p-8`}>
-              {!theme.includes('high-contrast') && (
-                <div className="absolute inset-0 overflow-hidden pointer-events-none">
-                  {/* Flat ambient background removed for accessibility */}
-                </div>
-              )}
-              <div className="flex flex-col items-center justify-between h-full max-h-[800px] py-4">
-                <div className="flex-1 flex flex-col items-center justify-center w-full">
-                  <div className={`w-20 h-28 rounded-xl flex items-center justify-center border-4 ${currentTheme.readingDark ? 'glow' : 'shadow-lg'} backdrop-blur-sm mb-6 ${currentTheme.coverBorder} ${currentTheme.readingDark ? 'bg-white/10' : 'bg-black'}`}>
-                    <BookOpen size={40} style={{ color: { yellow: '#facc15', red: '#ef4444', green: '#10b981', orange: '#f97316', purple: '#a855f7', blue: '#3b82f6' }[boundaryColor] || '#facc15' }} />
-                  </div>
-                  <h1 className={`text-4xl md:text-6xl font-black font-serif text-center mb-4 leading-tight tracking-tight fade-in-up ${currentTheme.coverText} max-w-4xl`}>{storyTitle}</h1>
-                  <p className={`text-xl font-bold mb-8 fade-in-up ${currentTheme.coverSub}`}>A Story for You</p>
-
-                  <div className="relative mb-8">
-                    <div className={`absolute inset-0 w-20 h-20 rounded-full pulse-ring ${currentTheme.pulse}`} />
-                    <div className={`w-20 h-20 rounded-full flex items-center justify-center border-4 backdrop-blur-sm ${currentTheme.coverElementBg} ${currentTheme.coverBorder}`}>
-                      <Volume2 size={32} style={{ color: { yellow: '#facc15', red: '#ef4444', green: '#10b981', orange: '#f97316', purple: '#a855f7', blue: '#3b82f6' }[boundaryColor] || '#facc15' }} />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col items-center pb-8">
-                  <span className={`font-black text-xl uppercase tracking-widest mb-2 ${currentTheme.coverSub}`}>Tap Anywhere</span>
-                  <span className={`text-lg font-bold ${currentTheme.coverSub} border-b-2 ${currentTheme.coverBorder} pb-1`}>Title Page</span>
-                </div>
-              </div>
-            </div>
-          )
-          }
-
-          {
-            isReading && (
-              <div className={`absolute inset-0 ${currentTheme.bg} flex flex-col items-center justify-center p-6 pb-36 md:p-16 md:pb-44`}>
-                {isGenerating && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 z-20 backdrop-blur-sm">
-                    <Loader2 className={`w-12 h-12 animate-spin ${currentTheme.text}`} />
-                  </div>
-                )}
-                <div className={`relative max-w-5xl mx-auto px-6 ${isTransitioning ? 'page-turn' : ''}`}>
-                  <p className={`${getTextSizeClass()} font-serif font-bold text-center leading-loose tracking-wide ${currentTheme.text}`}>{sentences[currentIndex]}</p>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-8 flex flex-col items-center gap-6">
-                  {isPlaying ? (
-                    <div className={`flex items-center gap-3 ${currentTheme.text} opacity-60`}>
-                      <div className="flex gap-1">{[...Array(4)].map((_, i) => (<div key={i} className={`w-1 rounded-full animate-pulse ${currentTheme.progress}`} style={{ height: `${12 + Math.random() * 12}px`, animationDelay: `${i * 0.1}s` }} />))}</div>
-                      <span className="text-sm font-semibold uppercase tracking-wider">Listening...</span>
-                    </div>
-                  ) : !isGenerating && (
-                    <div className={`flex items-center gap-2 opacity-40 animate-pulse ${currentTheme.text}`}>
-                      <span className="text-sm font-semibold uppercase tracking-wider">Tap for next</span>
-                    </div>
-                  )}
-                  <div className="w-full max-w-md mx-auto">
-                    <div className={`h-8 rounded-full overflow-hidden border-4 border-current ${currentTheme.readingDark ? 'bg-white/20' : 'bg-black/10'} shadow-inner ${currentTheme.text}`}>
-                      <div className={`h-full transition-all duration-500`} style={{ width: `${progress}%`, backgroundColor: { yellow: '#facc15', red: '#ef4444', green: '#10b981', orange: '#f97316', purple: '#a855f7', blue: '#3b82f6' }[boundaryColor] || '#facc15' }} />
-                    </div>
-                    <p className={`text-center text-lg mt-3 font-black uppercase tracking-widest ${currentTheme.text}`}>Page {currentIndex + 1}</p>
-                  </div>
-                </div>
-              </div>
-            )
-          }
-
-          {
-            isEnd && (
-              <div
-                className={`absolute inset-0 ${currentTheme.coverBg} flex flex-col items-center justify-center p-8 z-50 cursor-pointer`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  executeEndAction();
-                }}
-              >
-                {!theme.includes('high-contrast') && (
-                  <div className="absolute inset-0 overflow-hidden pointer-events-none"></div>
-                )}
-                <div className="flex flex-col items-center justify-between h-full max-h-[800px] py-4">
-                  <div className="flex-1 flex flex-col items-center justify-center w-full">
-                    {/* Check Icon Card */}
-                    <div className={`w-20 h-28 rounded-xl flex items-center justify-center border-4 ${currentTheme.readingDark ? 'glow' : 'shadow-lg'} backdrop-blur-sm mb-6 ${currentTheme.coverBorder} ${currentTheme.readingDark ? 'bg-white/10' : 'bg-black'}`}>
-                      <Check size={40} strokeWidth={3} style={{ color: { yellow: '#facc15', red: '#ef4444', green: '#10b981', orange: '#f97316', purple: '#a855f7', blue: '#3b82f6' }[boundaryColor] || '#facc15' }} />
-                    </div>
-
-                    <h1 className={`text-4xl md:text-6xl font-black font-serif text-center mb-4 leading-tight tracking-tight fade-in-up ${currentTheme.coverText}`}>The End</h1>
-                    <p className={`text-xl font-bold mb-8 fade-in-up ${currentTheme.coverSub}`}>What a great story!</p>
-
-                    {/* Action Icon (Centerpiece) */}
-                    {endAction !== 'stop' && (
-                      <div className="relative mb-8">
-                        <div className={`absolute inset-0 w-24 h-24 rounded-full pulse-ring ${currentTheme.pulse}`} />
-                        <div className={`w-24 h-24 rounded-full flex items-center justify-center border-4 backdrop-blur-sm shadow-xl ${currentTheme.coverElementBg} ${currentTheme.coverBorder}`}>
-                          {endAction === 'library' && <ArrowLeft size={40} style={{ color: { yellow: '#facc15', red: '#ef4444', green: '#10b981', orange: '#f97316', purple: '#a855f7', blue: '#3b82f6' }[boundaryColor] || '#facc15' }} />}
-                          {endAction === 'loop' && <RefreshCw size={40} style={{ color: { yellow: '#facc15', red: '#ef4444', green: '#10b981', orange: '#f97316', purple: '#a855f7', blue: '#3b82f6' }[boundaryColor] || '#facc15' }} />}
-                          {endAction === 'random' && <Sparkles size={40} style={{ color: { yellow: '#facc15', red: '#ef4444', green: '#10b981', orange: '#f97316', purple: '#a855f7', blue: '#3b82f6' }[boundaryColor] || '#facc15' }} />}
-                        </div>
-                      </div>
-                    )}
-
-                    {endAction === 'stop' && (
-                      <div className={`w-24 h-24 rounded-full flex items-center justify-center border-4 opacity-50 ${currentTheme.coverBorder}`}>
-                        <StopCircle size={40} style={{ color: { yellow: '#facc15', red: '#ef4444', green: '#10b981', orange: '#f97316', purple: '#a855f7', blue: '#3b82f6' }[boundaryColor] || '#facc15' }} />
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="flex flex-col items-center pb-8 opacity-80">
-                    <span className={`font-black text-xl uppercase tracking-widest mb-2 ${currentTheme.coverSub}`}>
-                      {endAction === 'library' && 'Tap for Library'}
-                      {endAction === 'loop' && 'Tap to Read Again'}
-                      {endAction === 'random' && 'Tap for Surprise'}
-                      {endAction === 'stop' && 'Story Finished'}
-                    </span>
-                    {endAction !== 'stop' && <span className={`text-lg font-bold ${currentTheme.coverSub} border-b-2 ${currentTheme.coverBorder} pb-1`}>Next Step</span>}
-                  </div>
-                </div>
-              </div>
-            )
-          }
-        </div >
-      );
-    };
-
-    createRoot(document.getElementById('root')).render(<App />);
-  </script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('sw.js')
-          .then(registration => console.log('SW registered: ', registration.scope))
-          .catch(registrationError => console.log('SW registration failed: ', registrationError));
-      });
-    }
-  </script>
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .catch(() => {
+                        // Service worker registration failed, app still works without it
+                    });
+            });
+        }
+    </script>
 </body>
-
 </html>
